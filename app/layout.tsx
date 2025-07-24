@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import "@fontsource/poppins"; // This includes the default weight (400)
 
 const inter = Inter({ subsets: ['latin'] });
 
