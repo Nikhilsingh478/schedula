@@ -1,3 +1,5 @@
+import { Doctor } from './doctor';
+
 export interface Appointment {
   id: string;
   doctorId: string;

@@ -1,8 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Doctor } from '@/types/doctor';
-import { BookingData, User } from '@/types/appointment';
+import { BookingData } from '@/types/appointment';
+import { User } from '@/types/patient'; // Correctly importing User type
 
 interface BookingContextType {
   currentScreen: string;
@@ -22,8 +22,8 @@ const initialBookingData: BookingData = {
   selectedTime: '',
   patientInfo: {
     name: '',
-    phone: ''
-  }
+    phone: '',
+  },
 };
 
 export function BookingProvider({ children }: { children: ReactNode }) {
@@ -32,7 +32,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   const setBookingData = (data: Partial<BookingData>) => {
-    setBookingDataState(prev => ({ ...prev, ...data }));
+    setBookingDataState((prev) => ({ ...prev, ...data }));
   };
 
   const resetBooking = () => {

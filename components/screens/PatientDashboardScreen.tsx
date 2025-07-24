@@ -17,7 +17,19 @@ import PatientRecords from "./PatientRecords";
 import UserProfileScreen from "@/components/screens/UserProfileScreen";
 import AppointmentsScreen from "@/components/screens/AppointmentsScreen";
 
-const mockDoctors = [
+// Type Definitions
+type Doctor = {
+  id: string;
+  name: string;
+  specialization: string;
+  availability: string;
+  bio: string;
+  workingHours: string;
+  image: string;
+  isFavorite: boolean;
+};
+
+const mockDoctors: Doctor[] = [
   {
     id: "1",
     name: "Dr. Prakash Das",
@@ -65,12 +77,12 @@ const mockDoctors = [
 ];
 
 export default function PatientDashboardScreen() {
-  const [doctors, setDoctors] = useState(mockDoctors);
+  const [doctors, setDoctors] = useState<Doctor[]>(mockDoctors);
   const [activeTab, setActiveTab] = useState<
     "find-doctor" | "appointments" | "records" | "profile"
   >("find-doctor");
 
-  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [showDoctorProfile, setShowDoctorProfile] = useState(false);
 
   const toggleFavorite = (doctorId: string) => {
@@ -83,7 +95,7 @@ export default function PatientDashboardScreen() {
     );
   };
 
-  const DoctorCard = ({ doctor }) => (
+  const DoctorCard = ({ doctor }: { doctor: Doctor }) => (
     <div
       onClick={() => {
         setSelectedDoctor(doctor);
@@ -231,7 +243,7 @@ export default function PatientDashboardScreen() {
               key={key}
               onClick={() => {
                 setShowDoctorProfile(false);
-                setActiveTab(key as any);
+                setActiveTab(key as typeof activeTab);
               }}
               className={`flex flex-col items-center px-4 py-2 transition-colors ${
                 activeTab === key ? "text-[#46c2de]" : "text-gray-400"

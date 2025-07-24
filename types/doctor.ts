@@ -11,6 +11,7 @@ export interface Doctor {
   services: string;
   slots: string[];
   image?: string;
+  fee?: number;
 }
 
 export interface TimeSlot {

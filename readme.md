@@ -1,8 +1,7 @@
 # 🩺 Doctor Appointment Scheduling Web App
 
-![Project Banner](https://via.placeholder.com/1200x400?text=Doctor+Appointment+App) <!-- Replace with actual banner -->
 
-A modern, mobile-first web application for scheduling doctor appointments. Built with **Next.js**, **Tailwind CSS**, and **TypeScript**, featuring a clean UI and seamless booking experience.
+mobile-first web application for scheduling doctor appointments. Built with **Next.js**, **Tailwind CSS**, and **TypeScript**, featuring a clean UI and seamless booking experience.
 
 ## ✨ Features
 
