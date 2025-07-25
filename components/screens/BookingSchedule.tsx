@@ -1,23 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useBooking } from "@/context/BookingContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Calendar, Clock, Sun, Moon } from "lucide-react";
 import { getNextDays, formatDate } from "@/lib/utils";
-import slotsData from "@/data/slots.json";
 import { DoctorSlots, TimeSlot } from "@/types/doctor";
+import { useRouter } from "next/navigation";
 
 export default function BookingSchedule() {
   const { bookingData, setBookingData, setCurrentScreen } = useBooking();
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
+  const [slotsData, setSlotsData] = useState<Record<string, any> | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    setLoading(true);
+    fetch("http://localhost:3001/slots")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch slots");
+        return res.json();
+      })
+      .then((data) => {
+        setSlotsData(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
 
   const doctor = bookingData?.doctor;
   const availableDates = getNextDays(7);
   const doctorSlots: DoctorSlots =
-    (slotsData as Record<string, DoctorSlots>)[doctor?.id || ""] || {};
+    (slotsData && doctor?.id ? slotsData[doctor.id] : {}) || {};
 
   if (!doctor) {
     return (
@@ -25,6 +46,13 @@ export default function BookingSchedule() {
         Doctor not found.
       </div>
     );
+  }
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center text-gray-600 text-sm">Loading slots...</div>;
+  }
+  if (error) {
+    return <div className="min-h-screen flex items-center justify-center text-red-500 text-sm">{error}</div>;
   }
 
   const handleBooking = () => {
@@ -50,7 +78,7 @@ export default function BookingSchedule() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setCurrentScreen("doctorProfile")}
+              onClick={() => setCurrentScreen("doctorList")}
               className="p-2"
             >
               <ArrowLeft className="w-5 h-5" />

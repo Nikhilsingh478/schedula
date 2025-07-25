@@ -42,6 +42,29 @@ export default function OtpVerificationScreen() {
     }
   };
 
+  const handleKeypadInput = (digit: string) => {
+    const nextIndex = otp.findIndex((d) => d === "");
+    if (nextIndex !== -1) {
+      const updatedOtp = [...otp];
+      updatedOtp[nextIndex] = digit;
+      setOtp(updatedOtp);
+      if (nextIndex < 3) {
+        inputsRef.current[nextIndex + 1]?.focus();
+      }
+    }
+  };
+
+  const handleKeypadBackspace = () => {
+    const lastFilled = [...otp].reverse().findIndex((d) => d !== "");
+    if (lastFilled !== -1) {
+      const idx = 3 - lastFilled;
+      const updatedOtp = [...otp];
+      updatedOtp[idx] = "";
+      setOtp(updatedOtp);
+      inputsRef.current[idx]?.focus();
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const enteredOtp = otp.join("");
@@ -81,6 +104,27 @@ export default function OtpVerificationScreen() {
               className="w-14 h-14 text-center border border-gray-300 rounded-xl text-xl font-medium outline-none focus:border-[#46C2DE] shadow-sm"
             />
           ))}
+        </div>
+
+        {/* Keypad */}
+        <div className="grid grid-cols-3 gap-4 max-w-xs mx-auto mt-6">
+          {["1","2","3","4","5","6","7","8","9","0"].map((num, i) => (
+            <button
+              key={num + i}
+              type="button"
+              onClick={() => handleKeypadInput(num)}
+              className="bg-gray-100 hover:bg-gray-200 text-xl font-semibold rounded-xl py-3 shadow text-gray-800 focus:outline-none"
+            >
+              {num}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={handleKeypadBackspace}
+            className="col-span-3 bg-gray-200 hover:bg-gray-300 text-lg rounded-xl py-3 shadow text-gray-800 focus:outline-none"
+          >
+            ⌫ Backspace
+          </button>
         </div>
 
         <button

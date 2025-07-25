@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Search,
   Bell,
@@ -11,6 +11,7 @@ import {
   Stethoscope,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
 
 import DoctorProfileView from "./DoctorProfileView";
 import PatientRecords from "./PatientRecords";
@@ -27,6 +28,14 @@ type Doctor = {
   workingHours: string;
   image: string;
   isFavorite: boolean;
+  qualification?: string;
+  location?: string;
+  patients?: number;
+  experience?: number;
+  rating?: number;
+  about?: string;
+  services?: string;
+  slots?: string[];
 };
 
 const mockDoctors: Doctor[] = [
@@ -77,13 +86,33 @@ const mockDoctors: Doctor[] = [
 ];
 
 export default function PatientDashboardScreen() {
-  const [doctors, setDoctors] = useState<Doctor[]>(mockDoctors);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [activeTab, setActiveTab] = useState<
     "find-doctor" | "appointments" | "records" | "profile"
   >("find-doctor");
-
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [showDoctorProfile, setShowDoctorProfile] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    setLoading(true);
+    fetch("http://localhost:3001/doctors")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch doctors");
+        return res.json();
+      })
+      .then((data) => {
+        setDoctors(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
 
   const toggleFavorite = (doctorId: string) => {
     setDoctors((prev) =>
@@ -94,6 +123,14 @@ export default function PatientDashboardScreen() {
       ),
     );
   };
+
+  const filteredDoctors = doctors.filter((doctor) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      doctor.name.toLowerCase().includes(term) ||
+      (doctor.specialization && doctor.specialization.toLowerCase().includes(term))
+    );
+  });
 
   const DoctorCard = ({ doctor }: { doctor: Doctor }) => (
     <div
@@ -115,6 +152,12 @@ export default function PatientDashboardScreen() {
               {doctor.name}
             </h3>
             <p className="text-gray-600 text-sm">{doctor.specialization}</p>
+            {doctor.qualification && (
+              <p className="text-xs text-gray-500">{doctor.qualification}</p>
+            )}
+            {doctor.location && (
+              <p className="text-xs text-gray-500">{doctor.location}</p>
+            )}
           </div>
           <button
             onClick={(e) => {
@@ -132,19 +175,32 @@ export default function PatientDashboardScreen() {
             />
           </button>
         </div>
-        <div className="mb-2">
-          <span
-            className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-              doctor.availability === "Available today"
-                ? "text-green-600 bg-green-50"
-                : "text-orange-600 bg-orange-50"
-            }`}
-          >
-            {doctor.availability}
-          </span>
+        <div className="mb-2 flex flex-wrap gap-2 items-center">
+          {doctor.rating && (
+            <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700">
+              ⭐ {doctor.rating}
+            </span>
+          )}
+          {doctor.experience && (
+            <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+              {doctor.experience} yrs exp
+            </span>
+          )}
+          {doctor.patients && (
+            <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700">
+              {doctor.patients} patients
+            </span>
+          )}
         </div>
-        <p className="text-gray-700 text-sm mb-2 line-clamp-2">{doctor.bio}</p>
-        <p className="text-gray-500 text-xs">{doctor.workingHours}</p>
+        {doctor.about && (
+          <p className="text-gray-700 text-xs mb-1 line-clamp-2">{doctor.about}</p>
+        )}
+        {doctor.services && (
+          <p className="text-gray-500 text-xs mb-1">Services: {doctor.services}</p>
+        )}
+        {doctor.workingHours && (
+          <p className="text-gray-500 text-xs">Hours: {doctor.workingHours}</p>
+        )}
       </div>
     </div>
   );
@@ -174,7 +230,7 @@ export default function PatientDashboardScreen() {
 
     switch (activeTab) {
       case "appointments":
-        return <AppointmentsScreen />;
+        return <AppointmentsScreen showNotificationIcon={true} />;
       case "records":
         return <PatientRecords />;
       case "profile":
@@ -192,31 +248,45 @@ export default function PatientDashboardScreen() {
                   </h1>
                   <p className="text-gray-600 text-sm">Dombivli, Mumbai</p>
                 </div>
-                <div className="relative">
-                  <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                    <Bell className="w-6 h-6 text-gray-600" />
-                  </button>
-                  <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    5
-                  </div>
-                </div>
+                {/* Logout button only in find-doctor tab */}
+                <button
+                  className="px-4 py-2 bg-[#46c2de] text-white rounded-lg font-medium hover:bg-[#3bb0ca] transition"
+                  onClick={() => {
+                    localStorage.removeItem("userRole");
+                    localStorage.removeItem("patientPhone");
+                    localStorage.removeItem("doctorPhone");
+                    localStorage.removeItem("tempDoctorPhone");
+                    window.location.href = "/";
+                  }}
+                >
+                  Logout
+                </button>
               </div>
-
               {/* Search Bar */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <Input
                   placeholder="Search Doctors"
                   className="pl-10 h-12 rounded-full border-gray-200 bg-gray-50 focus:bg-white focus:border-[#46c2de] focus:ring-2 focus:ring-[#46c2de]/20"
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
                 />
               </div>
             </div>
 
             {/* Doctor List */}
             <div className="px-6 py-4 space-y-4">
-              {doctors.map((doctor) => (
-                <DoctorCard key={doctor.id} doctor={doctor} />
-              ))}
+              {loading ? (
+                <div className="text-center text-gray-500">Loading doctors...</div>
+              ) : error ? (
+                <div className="text-center text-red-500">{error}</div>
+              ) : filteredDoctors.length === 0 ? (
+                <div className="text-center text-gray-400">No doctors found.</div>
+              ) : (
+                filteredDoctors.map((doctor) => (
+                  <DoctorCard key={doctor.id} doctor={doctor} />
+                ))
+              )}
             </div>
           </>
         );

@@ -14,15 +14,41 @@ import {
   Settings,
   Bell,
 } from "lucide-react";
-import doctorsData from "@/data/doctors.json";
+import { useEffect, useState } from "react";
 import { Doctor } from "@/types/doctor";
 
 export default function DoctorOwnProfile() {
   const { user, setCurrentScreen } = useBooking();
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch("http://localhost:3001/doctors")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch doctors");
+        return res.json();
+      })
+      .then((data) => {
+        setDoctors(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
 
   // Find doctor data based on user's doctorId
-  const doctor = doctorsData.find((d) => d.id === user?.doctorId) as Doctor;
+  const doctor = doctors.find((d) => d.id === user?.doctorId) as Doctor;
 
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center text-gray-600 text-sm">Loading doctor profile...</div>;
+  }
+  if (error) {
+    return <div className="min-h-screen flex items-center justify-center text-red-500 text-sm">{error}</div>;
+  }
   if (!doctor) {
     return <div>Doctor profile not found</div>;
   }

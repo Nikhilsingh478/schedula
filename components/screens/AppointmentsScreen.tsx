@@ -1,23 +1,57 @@
 "use client";
 
-import { useState } from "react";
-import { appointments, AppointmentStatus } from "@/data/appointments";
+import { useEffect, useState } from "react";
 import Image from "next/image";
+import { Bell } from "lucide-react";
 
-const TABS: AppointmentStatus[] = ["upcoming", "completed", "cancelled"];
+const TABS = ["upcoming", "completed", "cancelled"] as const;
+type AppointmentStatus = typeof TABS[number];
 
-export default function AppointmentsScreen() {
+export default function AppointmentsScreen({ showNotificationIcon = false }: { showNotificationIcon?: boolean }) {
   const [selectedTab, setSelectedTab] = useState<AppointmentStatus>("upcoming");
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch("http://localhost:3001/appointments")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch appointments");
+        return res.json();
+      })
+      .then((data) => {
+        setAppointments(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
 
   const filteredAppointments = appointments.filter(
     (appt) => appt.status === selectedTab,
   );
 
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center text-gray-600 text-sm">Loading appointments...</div>;
+  }
+  if (error) {
+    return <div className="min-h-screen flex items-center justify-center text-red-500 text-sm">{error}</div>;
+  }
+
   return (
     <div className="max-w-sm mx-auto font-sans bg-white min-h-screen">
       {/* Header */}
-      <div className="sticky top-0 bg-white z-10 px-4 py-4 shadow-sm">
+      <div className="sticky top-0 bg-white z-10 px-4 py-4 shadow-sm flex items-center justify-between">
         <h1 className="text-xl font-semibold text-gray-900">My Appointments</h1>
+        {showNotificationIcon && (
+          <button className="p-2 hover:bg-gray-100 rounded-full transition-colors relative">
+            <Bell className="w-6 h-6 text-gray-600" />
+            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">5</div>
+          </button>
+        )}
       </div>
 
       {/* Tabs */}

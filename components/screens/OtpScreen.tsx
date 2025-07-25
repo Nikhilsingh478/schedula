@@ -93,7 +93,7 @@ export default function OtpScreen() {
 
           <Button
             onClick={handleVerify}
-            className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors"
+            className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors text-base sm:text-lg sm:h-14 sm:mt-4 md:w-60 md:mx-auto"
             disabled={!otpComplete}
           >
             Verify & Continue

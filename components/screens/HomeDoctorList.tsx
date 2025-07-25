@@ -6,17 +6,43 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Users, Search, Heart } from "lucide-react";
-import doctorsData from "@/data/doctors.json";
+import { useEffect, useState } from "react";
 import { Doctor } from "@/types/doctor";
 
 export default function HomeDoctorList() {
   const { setCurrentScreen, setBookingData } = useBooking();
-  const doctors = doctorsData as Doctor[];
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch("http://localhost:3001/doctors")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch doctors");
+        return res.json();
+      })
+      .then((data) => {
+        setDoctors(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
 
   const handleDoctorSelect = (doctor: Doctor) => {
     setBookingData({ doctor });
     setCurrentScreen("doctorProfile");
   };
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center text-gray-600 text-sm">Loading doctors...</div>;
+  }
+  if (error) {
+    return <div className="min-h-screen flex items-center justify-center text-red-500 text-sm">{error}</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

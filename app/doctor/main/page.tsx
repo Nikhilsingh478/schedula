@@ -93,10 +93,10 @@ export default function DoctorMainScreen() {
 
   const today = new Date().toISOString().split("T")[0];
   const upcomingAppointments = appointments.filter(
-    (appt) => appt.date >= today,
+    (appt) => appt.date >= today && appt.patientName && appt.patientName.trim() !== ""
   );
   const uniquePatients = Array.from(
-    new Set(appointments.map((appt) => appt.patientName)),
+    new Set(appointments.map((appt) => appt.patientName).filter(name => name && name.trim() !== ""))
   );
 
   const handleProfileSave = async () => {
@@ -279,7 +279,7 @@ export default function DoctorMainScreen() {
               <p className="text-gray-500">No appointments yet.</p>
             ) : (
               <div className="space-y-4">
-                {appointments.map((appt) => (
+                {appointments.filter(appt => appt.patientName && appt.patientName.trim() !== "").map((appt) => (
                   <div
                     key={appt.id}
                     className="border rounded-xl p-4 shadow-sm flex justify-between items-center"
@@ -317,7 +317,7 @@ export default function DoctorMainScreen() {
               <p className="text-gray-500">No patients found.</p>
             ) : (
               <ul className="list-disc pl-5 space-y-2 text-gray-700">
-                {uniquePatients.map((name, i) => (
+                {uniquePatients.filter(name => name && name.trim() !== "").map((name, i) => (
                   <li key={i}>{name}</li>
                 ))}
               </ul>
