@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useBooking } from '@/context/BookingContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Star, MapPin, Users, Search, Heart } from 'lucide-react';
-import doctorsData from '@/data/doctors.json';
-import { Doctor } from '@/types/doctor';
+import { useBooking } from "@/context/BookingContext";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Star, MapPin, Users, Search, Heart } from "lucide-react";
+import doctorsData from "@/data/doctors.json";
+import { Doctor } from "@/types/doctor";
 
 export default function HomeDoctorList() {
   const { setCurrentScreen, setBookingData } = useBooking();
@@ -15,7 +15,7 @@ export default function HomeDoctorList() {
 
   const handleDoctorSelect = (doctor: Doctor) => {
     setBookingData({ doctor });
-    setCurrentScreen('doctorProfile');
+    setCurrentScreen("doctorProfile");
   };
 
   return (
@@ -25,8 +25,12 @@ export default function HomeDoctorList() {
         <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Find Your Doctor</h1>
-              <p className="text-sm text-gray-600">Book appointments with top-rated specialists</p>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Find Your Doctor
+              </h1>
+              <p className="text-sm text-gray-600">
+                Book appointments with top-rated specialists
+              </p>
             </div>
             <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
               <Heart className="w-6 h-6 text-white" />
@@ -56,7 +60,7 @@ export default function HomeDoctorList() {
                 <img
                   src={
                     doctor.image ||
-                    'https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop'
+                    "https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop"
                   }
                   alt={doctor.name}
                   className="w-20 h-20 rounded-xl object-cover flex-shrink-0 bg-gray-100"
@@ -66,13 +70,21 @@ export default function HomeDoctorList() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h2 className="text-lg font-semibold text-gray-900">{doctor.name}</h2>
-                      <p className="text-blue-600 font-medium">{doctor.specialty}</p>
-                      <p className="text-sm text-gray-500">{doctor.qualification}</p>
+                      <h2 className="text-lg font-semibold text-gray-900">
+                        {doctor.name}
+                      </h2>
+                      <p className="text-blue-600 font-medium">
+                        {doctor.specialty}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {doctor.qualification}
+                      </p>
                     </div>
                     <div className="flex items-center bg-green-50 px-2 py-1 rounded-lg space-x-1">
                       <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                      <span className="text-sm font-medium text-gray-900">{doctor.rating}</span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {doctor.rating}
+                      </span>
                     </div>
                   </div>
 
@@ -89,7 +101,7 @@ export default function HomeDoctorList() {
 
                   <div className="flex flex-wrap gap-2 mt-4">
                     {doctor.services
-                      .split(', ')
+                      .split(", ")
                       .slice(0, 2)
                       .map((service, idx) => (
                         <Badge

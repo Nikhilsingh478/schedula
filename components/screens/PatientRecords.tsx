@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { FileText, Download } from 'lucide-react';
+import { useState } from "react";
+import { FileText, Download } from "lucide-react";
 
 interface MedicalRecord {
   id: string;
@@ -13,24 +13,27 @@ interface MedicalRecord {
 
 const mockRecords: MedicalRecord[] = [
   {
-    id: 'r001',
-    doctorName: 'Dr. Aman Bumrow',
-    date: '2025-05-10',
-    diagnosis: 'Mild anxiety and sleep disorder. Prescribed medication and suggested lifestyle changes.',
-    prescriptionUrl: '#',
+    id: "r001",
+    doctorName: "Dr. Aman Bumrow",
+    date: "2025-05-10",
+    diagnosis:
+      "Mild anxiety and sleep disorder. Prescribed medication and suggested lifestyle changes.",
+    prescriptionUrl: "#",
   },
   {
-    id: 'r002',
-    doctorName: 'Dr. Kavita Rao',
-    date: '2025-04-03',
-    diagnosis: 'Routine heart checkup. All parameters normal. No medication required.',
+    id: "r002",
+    doctorName: "Dr. Kavita Rao",
+    date: "2025-04-03",
+    diagnosis:
+      "Routine heart checkup. All parameters normal. No medication required.",
   },
   {
-    id: 'r003',
-    doctorName: 'Dr. Raj Malhotra',
-    date: '2024-12-15',
-    diagnosis: 'Left shoulder dislocation treated. Follow-up physiotherapy recommended.',
-    prescriptionUrl: '#',
+    id: "r003",
+    doctorName: "Dr. Raj Malhotra",
+    date: "2024-12-15",
+    diagnosis:
+      "Left shoulder dislocation treated. Follow-up physiotherapy recommended.",
+    prescriptionUrl: "#",
   },
 ];
 
@@ -38,7 +41,10 @@ export default function PatientRecords() {
   const [records] = useState<MedicalRecord[]>(mockRecords);
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 pt-6 pb-24 space-y-6" style={{ fontFamily: 'Poppins, sans-serif' }}>
+    <div
+      className="min-h-screen bg-gray-50 px-6 pt-6 pb-24 space-y-6"
+      style={{ fontFamily: "Poppins, sans-serif" }}
+    >
       <h1 className="text-xl font-semibold text-gray-800">Medical Records</h1>
 
       {records.length === 0 ? (
@@ -52,7 +58,9 @@ export default function PatientRecords() {
             >
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <h2 className="text-base font-medium text-gray-900">{record.doctorName}</h2>
+                  <h2 className="text-base font-medium text-gray-900">
+                    {record.doctorName}
+                  </h2>
                   <p className="text-sm text-gray-600">{record.date}</p>
                 </div>
                 {record.prescriptionUrl && (

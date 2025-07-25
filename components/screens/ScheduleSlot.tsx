@@ -1,52 +1,52 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, Calendar } from 'lucide-react';
-import BookingSuccessModal from '@/components/ScheduleSlot/BookingSuccessModal';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Calendar } from "lucide-react";
+import BookingSuccessModal from "@/components/ScheduleSlot/BookingSuccessModal";
 
 export default function ScheduleSlot() {
   const router = useRouter();
 
   const doctor = {
-    name: 'Dr. Kumar Das',
-    specialty: 'Cardiologist - Dombivali',
-    qualification: 'MBBS ,MD (Internal Medicine)',
+    name: "Dr. Kumar Das",
+    specialty: "Cardiologist - Dombivali",
+    qualification: "MBBS ,MD (Internal Medicine)",
     image:
-      'https://images.pexels.com/photos/8376317/pexels-photo-8376317.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop',
+      "https://images.pexels.com/photos/8376317/pexels-photo-8376317.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop",
   };
 
-  const dates = ['13 MON', '14 TUE', '16 WED', '17 THU', '18 FRI'];
-  const [selectedDate, setSelectedDate] = useState('14 TUE');
-  const [selectedSlot, setSelectedSlot] = useState('');
+  const dates = ["13 MON", "14 TUE", "16 WED", "17 THU", "18 FRI"];
+  const [selectedDate, setSelectedDate] = useState("14 TUE");
+  const [selectedSlot, setSelectedSlot] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [token, setToken] = useState('');
+  const [token, setToken] = useState("");
 
   const morningSlots = [
-    '09:30 AM – 09:45AM',
-    '10:00 AM – 10:15AM',
-    '10:30 AM – 10:45AM',
-    '11:00 AM – 11:15AM',
-    '11:30 AM – 11:45AM',
-    '12:00 PM – 12:15PM',
-    '12:30 PM – 12:45PM',
-    '01:00 PM – 01:15PM',
+    "09:30 AM – 09:45AM",
+    "10:00 AM – 10:15AM",
+    "10:30 AM – 10:45AM",
+    "11:00 AM – 11:15AM",
+    "11:30 AM – 11:45AM",
+    "12:00 PM – 12:15PM",
+    "12:30 PM – 12:45PM",
+    "01:00 PM – 01:15PM",
   ];
 
   const eveningSlots = [
-    '04:00 PM – 04:15PM',
-    '04:30 PM – 04:45PM',
-    '05:00 PM – 05:15PM',
+    "04:00 PM – 04:15PM",
+    "04:30 PM – 04:45PM",
+    "05:00 PM – 05:15PM",
   ];
 
   const handleBooking = () => {
     if (!selectedSlot) {
-      alert('Please select a slot before booking.');
+      alert("Please select a slot before booking.");
       return;
     }
 
     // Simulate token generation (replace later with backend-generated token)
-    const generatedToken = 'A' + Math.floor(Math.random() * 100 + 1).toString();
+    const generatedToken = "A" + Math.floor(Math.random() * 100 + 1).toString();
     setToken(generatedToken);
     setShowModal(true);
   };
@@ -55,7 +55,10 @@ export default function ScheduleSlot() {
     <div className="min-h-screen bg-white max-w-sm mx-auto font-sans relative">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-[#46C2DE] text-white py-4 px-4 flex items-center gap-3">
-        <button onClick={() => router.back()} className="p-1 rounded-full hover:bg-[#ffffff33]">
+        <button
+          onClick={() => router.back()}
+          className="p-1 rounded-full hover:bg-[#ffffff33]"
+        >
           <ArrowLeft className="h-6 w-6" />
         </button>
         <h1 className="text-lg font-medium">Book Appointment</h1>
@@ -87,8 +90,8 @@ export default function ScheduleSlot() {
               onClick={() => setSelectedDate(date)}
               className={`min-w-[60px] h-[60px] flex items-center justify-center rounded-lg text-[13px] font-medium px-3 py-1 border ${
                 selectedDate === date
-                  ? 'bg-[#46C2DE] text-white border-[#46C2DE]'
-                  : 'bg-white text-gray-700 border-gray-300'
+                  ? "bg-[#46C2DE] text-white border-[#46C2DE]"
+                  : "bg-white text-gray-700 border-gray-300"
               }`}
             >
               {date}
@@ -107,8 +110,8 @@ export default function ScheduleSlot() {
               onClick={() => setSelectedSlot(slot)}
               className={`py-2 px-3 text-[13px] rounded-lg border text-center ${
                 selectedSlot === slot
-                  ? 'bg-[#46C2DE] text-white border-[#46C2DE]'
-                  : 'bg-white border-gray-300 text-gray-700'
+                  ? "bg-[#46C2DE] text-white border-[#46C2DE]"
+                  : "bg-white border-gray-300 text-gray-700"
               }`}
             >
               {slot}
@@ -127,8 +130,8 @@ export default function ScheduleSlot() {
               onClick={() => setSelectedSlot(slot)}
               className={`py-2 px-3 text-[13px] rounded-lg border text-center ${
                 selectedSlot === slot
-                  ? 'bg-[#46C2DE] text-white border-[#46C2DE]'
-                  : 'bg-white border-gray-300 text-gray-700'
+                  ? "bg-[#46C2DE] text-white border-[#46C2DE]"
+                  : "bg-white border-gray-300 text-gray-700"
               }`}
             >
               {slot}

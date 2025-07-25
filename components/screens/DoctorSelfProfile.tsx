@@ -1,41 +1,54 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Star, Users, Award, Calendar, Clock, GraduationCap, MapPin } from 'lucide-react';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Star,
+  Users,
+  Award,
+  Calendar,
+  Clock,
+  GraduationCap,
+  MapPin,
+} from "lucide-react";
 
 const doctorProfileData = {
-  name: 'Dr. Aman Bumrow',
-  specialization: 'Cardiologist',
-  institution: 'The Wiscon Hospital, California, US',
+  name: "Dr. Aman Bumrow",
+  specialization: "Cardiologist",
+  institution: "The Wiscon Hospital, California, US",
   patients: 5000,
   experience: 10,
   rating: 4.8,
-  about: 'Dr. Aman Bumrow is the top most Cardiologist specialist at The Wiscon Hospital in California. With over 10 years of experience in interventional cardiology, he has successfully treated thousands of patients with complex heart conditions. His expertise includes cardiac catheterization, angioplasty, and preventive cardiology. Dr. Bumrow is known for his compassionate care and innovative treatment approaches.',
+  about:
+    "Dr. Aman Bumrow is the top most Cardiologist specialist at The Wiscon Hospital in California. With over 10 years of experience in interventional cardiology, he has successfully treated thousands of patients with complex heart conditions. His expertise includes cardiac catheterization, angioplasty, and preventive cardiology. Dr. Bumrow is known for his compassionate care and innovative treatment approaches.",
   qualifications: {
-    degree: 'MBBS',
-    institution: 'Sydney College and University'
+    degree: "MBBS",
+    institution: "Sydney College and University",
   },
-  service: 'Medicare',
+  service: "Medicare",
   consultingHours: [
-    '08:00 AM – 10:00 AM',
-    '01:00 PM – 04:00 PM',
-    '06:00 PM – 08:00 PM'
+    "08:00 AM – 10:00 AM",
+    "01:00 PM – 04:00 PM",
+    "06:00 PM – 08:00 PM",
   ],
-  image: 'https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&fit=crop'
+  image:
+    "https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&fit=crop",
 };
 
 export default function DoctorSelfProfile() {
   const [showFullAbout, setShowFullAbout] = useState(false);
 
   const handleBookAppointment = () => {
-    console.log('Navigate to booking');
+    console.log("Navigate to booking");
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24" style={{ fontFamily: 'Poppins, sans-serif' }}>
+    <div
+      className="min-h-screen bg-gray-50 pb-24"
+      style={{ fontFamily: "Poppins, sans-serif" }}
+    >
       {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="px-4 py-6">
@@ -59,7 +72,8 @@ export default function DoctorSelfProfile() {
                   {doctorProfileData.name}
                 </h2>
                 <p className="text-sm text-gray-600 italic mb-2">
-                  {doctorProfileData.specialization} at {doctorProfileData.institution}
+                  {doctorProfileData.specialization} at{" "}
+                  {doctorProfileData.institution}
                 </p>
                 <div className="flex items-center text-sm text-gray-500">
                   <MapPin className="w-4 h-4 mr-1" />
@@ -118,15 +132,14 @@ export default function DoctorSelfProfile() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-700 leading-relaxed">
-              {showFullAbout 
+              {showFullAbout
                 ? doctorProfileData.about
-                : `${doctorProfileData.about.substring(0, 200)}...`
-              }
+                : `${doctorProfileData.about.substring(0, 200)}...`}
               <button
                 onClick={() => setShowFullAbout(!showFullAbout)}
                 className="text-[#46c2de] font-medium ml-1 hover:underline"
               >
-                {showFullAbout ? 'View Less' : 'View More'}
+                {showFullAbout ? "View Less" : "View More"}
               </button>
             </p>
           </CardContent>
@@ -144,11 +157,15 @@ export default function DoctorSelfProfile() {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="border-b pb-2">
                 <span className="text-gray-600">Degree</span>
-                <p className="font-medium">{doctorProfileData.qualifications.degree}</p>
+                <p className="font-medium">
+                  {doctorProfileData.qualifications.degree}
+                </p>
               </div>
               <div className="border-b pb-2">
                 <span className="text-gray-600">Institution</span>
-                <p className="font-medium">{doctorProfileData.qualifications.institution}</p>
+                <p className="font-medium">
+                  {doctorProfileData.qualifications.institution}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -193,12 +210,18 @@ export default function DoctorSelfProfile() {
                 <strong>Monday to Friday</strong>
               </div>
               {doctorProfileData.consultingHours.map((time, index) => (
-                <div key={index} className="bg-green-50 p-3 rounded-lg flex items-center justify-between">
+                <div
+                  key={index}
+                  className="bg-green-50 p-3 rounded-lg flex items-center justify-between"
+                >
                   <div className="flex items-center">
                     <Calendar className="w-4 h-4 text-green-600 mr-2" />
                     <span className="font-medium text-gray-900">{time}</span>
                   </div>
-                  <Badge variant="outline" className="text-green-600 border-green-200">
+                  <Badge
+                    variant="outline"
+                    className="text-green-600 border-green-200"
+                  >
                     Available
                   </Badge>
                 </div>

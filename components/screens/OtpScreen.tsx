@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useBooking } from '@/context/BookingContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState } from "react";
+import { useBooking } from "@/context/BookingContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-} from '@/components/ui/card';
-import { ArrowLeft, Shield } from 'lucide-react';
+} from "@/components/ui/card";
+import { ArrowLeft, Shield } from "lucide-react";
 
 export default function OtpScreen() {
-  const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
+  const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const { setCurrentScreen, setUser } = useBooking();
 
   const handleOtpChange = (index: number, value: string) => {
@@ -25,29 +25,31 @@ export default function OtpScreen() {
 
       // Auto-focus next input
       if (value && index < 5) {
-        const nextInput = document.getElementById(`otp-${index + 1}`) as HTMLInputElement;
+        const nextInput = document.getElementById(
+          `otp-${index + 1}`,
+        ) as HTMLInputElement;
         nextInput?.focus();
       }
     }
   };
 
   const handleVerify = () => {
-    const otpCode = otp.join('');
+    const otpCode = otp.join("");
     if (otpCode.length === 6) {
-      const isDoctor = otpCode === '123456'; // Mock logic
+      const isDoctor = otpCode === "123456"; // Mock logic
 
       setUser({
-        id: 'user1',
-        phone: '+1234567890',
-        role: isDoctor ? 'doctor' : 'patient',
-        doctorId: isDoctor ? 'dr1' : undefined,
+        id: "user1",
+        phone: "+1234567890",
+        role: isDoctor ? "doctor" : "patient",
+        doctorId: isDoctor ? "dr1" : undefined,
       });
 
-      setCurrentScreen(isDoctor ? 'doctorProfile' : 'doctorList');
+      setCurrentScreen(isDoctor ? "doctorProfile" : "doctorList");
     }
   };
 
-  const otpComplete = otp.every((digit) => digit !== '');
+  const otpComplete = otp.every((digit) => digit !== "");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center p-4">
@@ -56,7 +58,7 @@ export default function OtpScreen() {
           <Button
             variant="ghost"
             className="absolute top-4 left-4 p-2"
-            onClick={() => setCurrentScreen('login')}
+            onClick={() => setCurrentScreen("login")}
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
@@ -99,7 +101,7 @@ export default function OtpScreen() {
 
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Didnt receive the code?{' '}
+              Didnt receive the code?{" "}
               <button className="text-blue-600 font-medium hover:underline">
                 Resend OTP
               </button>

@@ -1,0 +1,87 @@
+{
+  "doctors": [
+    {
+      "id": "1",
+      "name": "Dr. Neel",
+      "phone": "9876543210",
+      "specialization": "Cardiology",
+      "experience": "8 years",
+      "about": "Experienced cardiologist passionate about patient care.perfection."
+    },
+    {
+      "id": "2",
+      "name": "Dr. Meera",
+      "phone": "9123456780",
+      "specialization": "Dermatology",
+      "experience": "5 years",
+      "about": "Committed to treating skin and hair disorders."
+    }
+  ],
+  "appointments": [
+    {
+      "id": 1,
+      "doctorId": 1,
+      "patientName": "Amit Sharma",
+      "date": "2025-07-26",
+      "time": "10:00 AM",
+      "status": "Confirmed"
+    },
+    {
+      "id": 2,
+      "doctorId": 1,
+      "patientName": "Neha Verma",
+      "date": "2025-07-26",
+      "time": "11:30 AM",
+      "status": "Pending"
+    },
+    {
+      "id": 3,
+      "doctorId": 1,
+      "patientName": "Raj Patel",
+      "date": "2025-07-27",
+      "time": "09:45 AM",
+      "status": "Confirmed"
+    },
+    {
+      "id": 4,
+      "doctorId": 1,
+      "patientName": "Simran Kaur",
+      "date": "2025-07-27",
+      "time": "02:00 PM",
+      "status": "Cancelled"
+    },
+    {
+      "id": 5,
+      "doctorId": 1,
+      "patientName": "Karan Mehta",
+      "date": "2025-07-28",
+      "time": "04:30 PM",
+      "status": "Confirmed"
+    },
+    {
+      "id": 6,
+      "doctorId": 1,
+      "patientName": "Priya Desai",
+      "date": "2025-07-28",
+      "time": "03:15 PM",
+      "status": "Confirmed"
+    },
+    {
+      "id": 7,
+      "doctorId": 1,
+      "patientName": "Ravi Nair",
+      "date": "2025-07-29",
+      "time": "11:00 AM",
+      "status": "Pending"
+    },
+    {
+      "id": 8,
+      "doctorId": 1,
+      "patientName": "Anjali Menon",
+      "date": "2025-07-29",
+      "time": "01:30 PM",
+      "status": "Confirmed"
+    }
+  ],
+  "patients": []
+}

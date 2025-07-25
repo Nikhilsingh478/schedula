@@ -1,7 +1,7 @@
 // app/ScheduleSlot/page.tsx
-'use client';
+"use client";
 
-import ScheduleSlot from '@/components/screens/ScheduleSlot';
+import ScheduleSlot from "@/components/screens/ScheduleSlot";
 
 export default function ScheduleSlotPage() {
   return <ScheduleSlot />;

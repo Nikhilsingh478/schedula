@@ -1,18 +1,27 @@
-'use client';
+"use client";
 
-import { useBooking } from '@/context/BookingContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Star, Users, Award, MapPin, Calendar, Clock, Settings, Bell } from 'lucide-react';
-import doctorsData from '@/data/doctors.json';
-import { Doctor } from '@/types/doctor';
+import { useBooking } from "@/context/BookingContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Star,
+  Users,
+  Award,
+  MapPin,
+  Calendar,
+  Clock,
+  Settings,
+  Bell,
+} from "lucide-react";
+import doctorsData from "@/data/doctors.json";
+import { Doctor } from "@/types/doctor";
 
 export default function DoctorOwnProfile() {
   const { user, setCurrentScreen } = useBooking();
-  
+
   // Find doctor data based on user's doctorId
-  const doctor = doctorsData.find(d => d.id === user?.doctorId) as Doctor;
+  const doctor = doctorsData.find((d) => d.id === user?.doctorId) as Doctor;
 
   if (!doctor) {
     return <div>Doctor profile not found</div>;
@@ -26,7 +35,9 @@ export default function DoctorOwnProfile() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
-              <p className="text-gray-600">Manage your professional information</p>
+              <p className="text-gray-600">
+                Manage your professional information
+              </p>
             </div>
             <div className="flex space-x-2">
               <Button variant="outline" size="sm">
@@ -50,7 +61,9 @@ export default function DoctorOwnProfile() {
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Users className="w-6 h-6 text-blue-600" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900">{doctor.patients.toLocaleString()}</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {doctor.patients.toLocaleString()}
+              </h3>
               <p className="text-gray-600">Total Patients</p>
             </CardContent>
           </Card>
@@ -60,7 +73,9 @@ export default function DoctorOwnProfile() {
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Award className="w-6 h-6 text-green-600" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900">{doctor.experience}</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {doctor.experience}
+              </h3>
               <p className="text-gray-600">Years Experience</p>
             </CardContent>
           </Card>
@@ -70,7 +85,9 @@ export default function DoctorOwnProfile() {
               <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Star className="w-6 h-6 text-yellow-600" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900">{doctor.rating}</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {doctor.rating}
+              </h3>
               <p className="text-gray-600">Average Rating</p>
             </CardContent>
           </Card>
@@ -84,17 +101,24 @@ export default function DoctorOwnProfile() {
           <CardContent className="space-y-6">
             <div className="flex items-start space-x-6">
               <img
-                src={doctor.image || `https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&fit=crop`}
+                src={
+                  doctor.image ||
+                  `https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&fit=crop`
+                }
                 alt={doctor.name}
                 className="w-24 h-24 rounded-xl object-cover"
               />
-              
+
               <div className="flex-1 space-y-3">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">{doctor.name}</h2>
-                  <p className="text-lg text-blue-600 font-medium">{doctor.specialty}</p>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {doctor.name}
+                  </h2>
+                  <p className="text-lg text-blue-600 font-medium">
+                    {doctor.specialty}
+                  </p>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="text-gray-600">Qualification:</span>
@@ -131,8 +155,12 @@ export default function DoctorOwnProfile() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {doctor.services.split(', ').map((service, index) => (
-                  <Badge key={index} variant="secondary" className="bg-blue-50 text-blue-700 px-3 py-1">
+                {doctor.services.split(", ").map((service, index) => (
+                  <Badge
+                    key={index}
+                    variant="secondary"
+                    className="bg-blue-50 text-blue-700 px-3 py-1"
+                  >
                     {service}
                   </Badge>
                 ))}
@@ -150,9 +178,15 @@ export default function DoctorOwnProfile() {
             <CardContent>
               <div className="space-y-2">
                 {doctor.slots.map((time, index) => (
-                  <div key={index} className="flex items-center justify-between py-2 px-3 bg-green-50 rounded-lg">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between py-2 px-3 bg-green-50 rounded-lg"
+                  >
                     <span className="font-medium text-green-700">{time}</span>
-                    <Badge variant="outline" className="text-green-600 border-green-200">
+                    <Badge
+                      variant="outline"
+                      className="text-green-600 border-green-200"
+                    >
                       Available
                     </Badge>
                   </div>
@@ -179,10 +213,12 @@ export default function DoctorOwnProfile() {
                 </div>
                 <div className="text-right">
                   <p className="font-medium text-blue-600">09:30 AM</p>
-                  <Badge className="bg-green-100 text-green-700">Confirmed</Badge>
+                  <Badge className="bg-green-100 text-green-700">
+                    Confirmed
+                  </Badge>
                 </div>
               </div>
-              
+
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
                   <p className="font-medium text-gray-900">Jane Smith</p>

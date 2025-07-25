@@ -1,4 +1,4 @@
-import { Doctor } from './doctor';
+import { Doctor } from "./doctor";
 
 export interface Appointment {
   id: string;
@@ -9,7 +9,7 @@ export interface Appointment {
   token: string;
   patientName?: string;
   patientPhone?: string;
-  status: 'confirmed' | 'pending' | 'cancelled';
+  status: "confirmed" | "pending" | "cancelled";
 }
 
 export interface BookingData {

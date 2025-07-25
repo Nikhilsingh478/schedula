@@ -1,11 +1,19 @@
-'use client';
+"use client";
 
-import { useBooking } from '@/context/BookingContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Calendar, Clock, User, Phone, Home, Share } from 'lucide-react';
-import { formatDateFull, generateToken } from '@/lib/utils';
+import { useBooking } from "@/context/BookingContext";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  CheckCircle,
+  Calendar,
+  Clock,
+  User,
+  Phone,
+  Home,
+  Share,
+} from "lucide-react";
+import { formatDateFull, generateToken } from "@/lib/utils";
 
 export default function BookingConfirmation() {
   const { bookingData, resetBooking, setCurrentScreen } = useBooking();
@@ -19,12 +27,12 @@ export default function BookingConfirmation() {
 
   const handleNewBooking = () => {
     resetBooking();
-    setCurrentScreen('doctorList');
+    setCurrentScreen("doctorList");
   };
 
   const handleShare = () => {
     // In a real app, this would open a share dialog
-    alert('Sharing appointment details...');
+    alert("Sharing appointment details...");
   };
 
   return (
@@ -48,7 +56,9 @@ export default function BookingConfirmation() {
           <CardContent className="p-6 text-center">
             <p className="text-blue-100 mb-2">Your Token Number</p>
             <h2 className="text-4xl font-bold mb-2">{token}</h2>
-            <p className="text-blue-100 text-sm">Keep this number for your visit</p>
+            <p className="text-blue-100 text-sm">
+              Keep this number for your visit
+            </p>
           </CardContent>
         </Card>
 
@@ -61,7 +71,10 @@ export default function BookingConfirmation() {
             {/* Doctor Info */}
             <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
               <img
-                src={doctor.image || `https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=60&h=60&fit=crop`}
+                src={
+                  doctor.image ||
+                  `https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=60&h=60&fit=crop`
+                }
                 alt={doctor.name}
                 className="w-12 h-12 rounded-lg object-cover"
               />
@@ -79,14 +92,14 @@ export default function BookingConfirmation() {
                 <div>
                   <p className="text-xs text-gray-600">Date</p>
                   <p className="font-medium text-gray-900 text-sm">
-                    {formatDateFull(selectedDate).split(',')[0]}
+                    {formatDateFull(selectedDate).split(",")[0]}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {formatDateFull(selectedDate).split(',')[1]}
+                    {formatDateFull(selectedDate).split(",")[1]}
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
                 <Clock className="w-5 h-5 text-green-600" />
                 <div>
@@ -120,7 +133,7 @@ export default function BookingConfirmation() {
                 <div className="w-32 h-4 bg-gray-200 rounded mt-1"></div>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
               <Phone className="w-5 h-5 text-gray-400" />
               <div className="flex-1">
@@ -141,7 +154,7 @@ export default function BookingConfirmation() {
             <Share className="w-5 h-5 mr-2" />
             Share Appointment Details
           </Button>
-          
+
           <Button
             onClick={handleNewBooking}
             className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium"
@@ -154,7 +167,8 @@ export default function BookingConfirmation() {
         {/* Help Text */}
         <div className="mt-6 p-4 bg-blue-50 rounded-lg">
           <p className="text-sm text-blue-800 text-center">
-            💡 Please arrive 15 minutes before your scheduled time and bring a valid ID.
+            💡 Please arrive 15 minutes before your scheduled time and bring a
+            valid ID.
           </p>
         </div>
       </div>

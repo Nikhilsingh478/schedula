@@ -90,8 +90,8 @@ export default function PatientDashboardScreen() {
       prev.map((doctor) =>
         doctor.id === doctorId
           ? { ...doctor, isFavorite: !doctor.isFavorite }
-          : doctor
-      )
+          : doctor,
+      ),
     );
   };
 

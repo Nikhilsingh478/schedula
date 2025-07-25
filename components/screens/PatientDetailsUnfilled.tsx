@@ -1,22 +1,33 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useBooking } from '@/context/BookingContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle, Calendar, Clock, User, Phone, MapPin, Home } from 'lucide-react';
+import { useState } from "react";
+import { useBooking } from "@/context/BookingContext";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  CheckCircle,
+  Calendar,
+  Clock,
+  User,
+  Phone,
+  MapPin,
+  Home,
+} from "lucide-react";
 
 export default function PatientDetailsUnfilled() {
   const { setCurrentScreen } = useBooking();
-  const [tokenNumber] = useState('1234');
+  const [tokenNumber] = useState("1234");
 
   const handleGoHome = () => {
     // Navigate back to patient dashboard
-    setCurrentScreen('doctorList');
+    setCurrentScreen("doctorList");
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
+    <div
+      className="min-h-screen bg-gray-50 p-4"
+      style={{ fontFamily: "Poppins, sans-serif" }}
+    >
       <div className="max-w-md mx-auto">
         {/* Success Confirmation Box */}
         <Card className="bg-white shadow-lg rounded-xl mt-8">
@@ -25,18 +36,18 @@ export default function PatientDetailsUnfilled() {
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle className="w-10 h-10 text-green-600" />
             </div>
-            
+
             {/* Success Message */}
             <h1 className="text-xl font-bold text-green-700">
               Appointment Booked Successfully!
             </h1>
-            
+
             {/* Token Number */}
             <div className="bg-[#46c2de] text-white rounded-lg p-4">
               <p className="text-sm opacity-90">Token No:</p>
               <p className="text-2xl font-bold">{tokenNumber}</p>
             </div>
-            
+
             {/* Reminder Text */}
             <p className="text-sm text-gray-600">
               You will receive a reminder 30 minutes before your appointment.
@@ -61,7 +72,7 @@ export default function PatientDetailsUnfilled() {
               <User className="w-5 h-5 mr-2 text-[#46c2de]" />
               Patient Details
             </h2>
-            
+
             <div className="space-y-4">
               {/* Name Field */}
               <div>
@@ -139,22 +150,26 @@ export default function PatientDetailsUnfilled() {
                 <h3 className="text-sm font-semibold text-gray-800 mb-3">
                   Appointment Details
                 </h3>
-                
+
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-blue-50 p-3 rounded-lg">
                     <div className="flex items-center text-[#46c2de] mb-1">
                       <Calendar className="w-4 h-4 mr-1" />
                       <span className="text-xs font-medium">Date</span>
                     </div>
-                    <p className="text-sm font-semibold text-gray-800">Jul 15, 2024</p>
+                    <p className="text-sm font-semibold text-gray-800">
+                      Jul 15, 2024
+                    </p>
                   </div>
-                  
+
                   <div className="bg-green-50 p-3 rounded-lg">
                     <div className="flex items-center text-green-600 mb-1">
                       <Clock className="w-4 h-4 mr-1" />
                       <span className="text-xs font-medium">Time</span>
                     </div>
-                    <p className="text-sm font-semibold text-gray-800">10:30 AM</p>
+                    <p className="text-sm font-semibold text-gray-800">
+                      10:30 AM
+                    </p>
                   </div>
                 </div>
               </div>
@@ -171,7 +186,7 @@ export default function PatientDetailsUnfilled() {
             <Home className="w-5 h-5 mr-2" />
             Back to Home
           </Button>
-          
+
           <p className="text-center text-xs text-gray-500">
             💡 Please arrive 15 minutes before your scheduled appointment time
           </p>

@@ -1,35 +1,30 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useBooking } from '@/context/BookingContext'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { ArrowLeft, Calendar, Clock, Sun, Moon } from 'lucide-react'
-import { getNextDays, formatDate } from '@/lib/utils'
-import slotsData from '@/data/slots.json'
-import { DoctorSlots, TimeSlot } from '@/types/doctor'
+import { useState } from "react";
+import { useBooking } from "@/context/BookingContext";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, Calendar, Clock, Sun, Moon } from "lucide-react";
+import { getNextDays, formatDate } from "@/lib/utils";
+import slotsData from "@/data/slots.json";
+import { DoctorSlots, TimeSlot } from "@/types/doctor";
 
 export default function BookingSchedule() {
-  const { bookingData, setBookingData, setCurrentScreen } = useBooking()
-  const [selectedDate, setSelectedDate] = useState('')
-  const [selectedTime, setSelectedTime] = useState('')
+  const { bookingData, setBookingData, setCurrentScreen } = useBooking();
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
 
-  const doctor = bookingData?.doctor
-  const availableDates = getNextDays(7)
+  const doctor = bookingData?.doctor;
+  const availableDates = getNextDays(7);
   const doctorSlots: DoctorSlots =
-    (slotsData as Record<string, DoctorSlots>)[doctor?.id || ''] || {}
+    (slotsData as Record<string, DoctorSlots>)[doctor?.id || ""] || {};
 
   if (!doctor) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600 text-sm">
         Doctor not found.
       </div>
-    )
+    );
   }
 
   const handleBooking = () => {
@@ -37,14 +32,14 @@ export default function BookingSchedule() {
       setBookingData({
         selectedDate,
         selectedTime,
-      })
-      setCurrentScreen('confirmation')
+      });
+      setCurrentScreen("confirmation");
     }
-  }
+  };
 
   const getAvailableSlots = (date: string) => {
-    return doctorSlots[date] || { morning: [], evening: [] }
-  }
+    return doctorSlots[date] || { morning: [], evening: [] };
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -55,7 +50,7 @@ export default function BookingSchedule() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setCurrentScreen('doctorProfile')}
+              onClick={() => setCurrentScreen("doctorProfile")}
               className="p-2"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -85,31 +80,31 @@ export default function BookingSchedule() {
           <CardContent>
             <div className="flex space-x-3 overflow-x-auto scroll-smooth pb-2 no-scrollbar">
               {availableDates.map((date) => {
-                const isSelected = selectedDate === date
-                const hasSlots = !!doctorSlots[date]
+                const isSelected = selectedDate === date;
+                const hasSlots = !!doctorSlots[date];
 
                 return (
                   <button
                     key={date}
                     onClick={() => {
-                      setSelectedDate(date)
-                      setSelectedTime('')
+                      setSelectedDate(date);
+                      setSelectedTime("");
                     }}
                     disabled={!hasSlots}
                     aria-selected={isSelected}
                     className={`flex-shrink-0 p-3 rounded-xl text-center min-w-[80px] transition-all ${
                       isSelected
-                        ? 'bg-blue-600 text-white'
+                        ? "bg-blue-600 text-white"
                         : hasSlots
-                        ? 'bg-white border-2 border-gray-200 hover:border-blue-400 text-gray-900'
-                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          ? "bg-white border-2 border-gray-200 hover:border-blue-400 text-gray-900"
+                          : "bg-gray-100 text-gray-400 cursor-not-allowed"
                     } focus:outline-none focus:ring-2 focus:ring-blue-300`}
                   >
                     <div className="text-sm font-medium">
                       {formatDate(date)}
                     </div>
                   </button>
-                )
+                );
               })}
             </div>
           </CardContent>
@@ -142,15 +137,15 @@ export default function BookingSchedule() {
                           aria-selected={selectedTime === slot.time}
                           className={`p-3 rounded-lg text-sm font-medium transition-all ${
                             selectedTime === slot.time
-                              ? 'bg-blue-600 text-white'
+                              ? "bg-blue-600 text-white"
                               : slot.available
-                              ? 'bg-white border border-gray-200 hover:border-blue-300 text-gray-900'
-                              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                ? "bg-white border border-gray-200 hover:border-blue-300 text-gray-900"
+                                : "bg-gray-100 text-gray-400 cursor-not-allowed"
                           } focus:outline-none focus:ring-2 focus:ring-blue-300`}
                         >
                           {slot.time}
                         </button>
-                      )
+                      ),
                     )}
                   </div>
                 </div>
@@ -173,15 +168,15 @@ export default function BookingSchedule() {
                           aria-selected={selectedTime === slot.time}
                           className={`p-3 rounded-lg text-sm font-medium transition-all ${
                             selectedTime === slot.time
-                              ? 'bg-blue-600 text-white'
+                              ? "bg-blue-600 text-white"
                               : slot.available
-                              ? 'bg-white border border-gray-200 hover:border-blue-300 text-gray-900'
-                              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                ? "bg-white border border-gray-200 hover:border-blue-300 text-gray-900"
+                                : "bg-gray-100 text-gray-400 cursor-not-allowed"
                           } focus:outline-none focus:ring-2 focus:ring-blue-300`}
                         >
                           {slot.time}
                         </button>
-                      )
+                      ),
                     )}
                   </div>
                 </div>
@@ -214,9 +209,7 @@ export default function BookingSchedule() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Consultation Fee:</span>
-                  <span className="font-medium">
-                    ${doctor.fee || 50}
-                  </span>
+                  <span className="font-medium">${doctor.fee || 50}</span>
                 </div>
               </div>
             </CardContent>
@@ -236,5 +229,5 @@ export default function BookingSchedule() {
         </div>
       )}
     </div>
-  )
+  );
 }

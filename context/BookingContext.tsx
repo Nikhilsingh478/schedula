@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { BookingData } from '@/types/appointment';
-import { User } from '@/types/patient'; // Correctly importing User type
+import React, { createContext, useContext, useState, ReactNode } from "react";
+import { BookingData } from "@/types/appointment";
+import { User } from "@/types/patient"; // Correctly importing User type
 
 interface BookingContextType {
   currentScreen: string;
@@ -18,17 +18,18 @@ const BookingContext = createContext<BookingContextType | undefined>(undefined);
 
 const initialBookingData: BookingData = {
   doctor: null,
-  selectedDate: '',
-  selectedTime: '',
+  selectedDate: "",
+  selectedTime: "",
   patientInfo: {
-    name: '',
-    phone: '',
+    name: "",
+    phone: "",
   },
 };
 
 export function BookingProvider({ children }: { children: ReactNode }) {
-  const [currentScreen, setCurrentScreen] = useState('login');
-  const [bookingData, setBookingDataState] = useState<BookingData>(initialBookingData);
+  const [currentScreen, setCurrentScreen] = useState("login");
+  const [bookingData, setBookingDataState] =
+    useState<BookingData>(initialBookingData);
   const [user, setUser] = useState<User | null>(null);
 
   const setBookingData = (data: Partial<BookingData>) => {
@@ -59,7 +60,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
 export function useBooking() {
   const context = useContext(BookingContext);
   if (context === undefined) {
-    throw new Error('useBooking must be used within a BookingProvider');
+    throw new Error("useBooking must be used within a BookingProvider");
   }
   return context;
 }

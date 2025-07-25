@@ -1,13 +1,16 @@
-'use client';
+"use client";
 
-import { FC } from 'react';
+import { FC } from "react";
 
 interface BookingSuccessModalProps {
   token: string;
   onClose: () => void;
 }
 
-const BookingSuccessModal: FC<BookingSuccessModalProps> = ({ token, onClose }) => {
+const BookingSuccessModal: FC<BookingSuccessModalProps> = ({
+  token,
+  onClose,
+}) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
       <div className="bg-white rounded-xl shadow-lg max-w-sm w-full p-6 text-center relative">
@@ -44,7 +47,8 @@ const BookingSuccessModal: FC<BookingSuccessModalProps> = ({ token, onClose }) =
 
         {/* Subtext */}
         <p className="text-xs text-gray-500 mt-2">
-          You will receive a Notification of Before half hour for as reminder thank you...
+          You will receive a Notification of Before half hour for as reminder
+          thank you...
         </p>
 
         {/* Close Button */}

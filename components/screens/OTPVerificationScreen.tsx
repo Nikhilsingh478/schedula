@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Delete } from 'lucide-react';
-import { useBooking } from '@/context/BookingContext';
+import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Delete } from "lucide-react";
+import { useBooking } from "@/context/BookingContext";
 
 export default function OTPVerificationScreen() {
-  const [otp, setOtp] = useState(['', '', '', '']);
+  const [otp, setOtp] = useState(["", "", "", ""]);
   const [timer, setTimer] = useState(55);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const { setCurrentScreen, setBookingData } = useBooking();
@@ -38,11 +38,11 @@ export default function OTPVerificationScreen() {
   };
 
   const handleKeypadPress = (value: string) => {
-    if (value === 'backspace') {
+    if (value === "backspace") {
       for (let i = 3; i >= 0; i--) {
-        if (otp[i] !== '') {
+        if (otp[i] !== "") {
           const newOtp = [...otp];
-          newOtp[i] = '';
+          newOtp[i] = "";
           setOtp(newOtp);
           inputRefs.current[i]?.focus();
           break;
@@ -50,7 +50,7 @@ export default function OTPVerificationScreen() {
       }
     } else {
       for (let i = 0; i < 4; i++) {
-        if (otp[i] === '') {
+        if (otp[i] === "") {
           const newOtp = [...otp];
           newOtp[i] = value;
           setOtp(newOtp);
@@ -64,20 +64,20 @@ export default function OTPVerificationScreen() {
   };
 
   const handleVerify = () => {
-    const otpCode = otp.join('');
-    if (otpCode.length === 4 && otp.every(digit => digit !== '')) {
+    const otpCode = otp.join("");
+    if (otpCode.length === 4 && otp.every((digit) => digit !== "")) {
       setBookingData({}); // Clear previous state (optional)
-      setCurrentScreen('doctorList'); // Go to doctor list
+      setCurrentScreen("doctorList"); // Go to doctor list
     }
   };
 
-  const isVerifyEnabled = otp.every(digit => digit !== '');
+  const isVerifyEnabled = otp.every((digit) => digit !== "");
 
   const keypadNumbers = [
-    ['1', '2', '3'],
-    ['4', '5', '6'],
-    ['7', '8', '9'],
-    ['*', '0', 'backspace']
+    ["1", "2", "3"],
+    ["4", "5", "6"],
+    ["7", "8", "9"],
+    ["*", "0", "backspace"],
   ];
 
   return (
@@ -120,7 +120,7 @@ export default function OTPVerificationScreen() {
         {/* Timer */}
         <div className="text-center mb-8">
           <p className="text-gray-600 text-sm">
-            Resend code in{' '}
+            Resend code in{" "}
             <span className="text-[#46c2de] font-semibold">{timer} s</span>
           </p>
         </div>
@@ -131,8 +131,8 @@ export default function OTPVerificationScreen() {
           disabled={!isVerifyEnabled}
           className={`w-full h-12 font-medium rounded-lg transition-all duration-200 mb-12 ${
             isVerifyEnabled
-              ? 'bg-[#46c2de] hover:bg-[#3bb5d1] text-white shadow-sm hover:shadow-md active:scale-[0.98]'
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              ? "bg-[#46c2de] hover:bg-[#3bb5d1] text-white shadow-sm hover:shadow-md active:scale-[0.98]"
+              : "bg-gray-200 text-gray-400 cursor-not-allowed"
           }`}
         >
           Verify
@@ -147,11 +147,7 @@ export default function OTPVerificationScreen() {
                 onClick={() => handleKeypadPress(key)}
                 className="h-14 flex items-center justify-center text-xl font-semibold text-gray-800 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-all duration-150 active:scale-95"
               >
-                {key === 'backspace' ? (
-                  <Delete className="w-6 h-6" />
-                ) : (
-                  key
-                )}
+                {key === "backspace" ? <Delete className="w-6 h-6" /> : key}
               </button>
             ))}
           </div>

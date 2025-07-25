@@ -8,6 +8,6 @@ export interface Patient {
 export interface User {
   id: string;
   phone: string;
-  role: 'doctor' | 'patient';
+  role: "doctor" | "patient";
   doctorId?: string;
 }
