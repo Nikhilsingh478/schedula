@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { API_ENDPOINTS } from "@/lib/config";
 import {
   Search,
   Bell,
@@ -99,7 +100,7 @@ export default function PatientDashboardScreen() {
 
   useEffect(() => {
     setLoading(true);
-    fetch("http://localhost:3001/doctors")
+    fetch(API_ENDPOINTS.doctors)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch doctors");
         return res.json();

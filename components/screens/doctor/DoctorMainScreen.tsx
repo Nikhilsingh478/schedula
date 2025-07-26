@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { API_ENDPOINTS } from "@/lib/config";
 import { Home, User, CalendarCheck, Users } from "lucide-react";
 
 type Appointment = {
@@ -45,7 +46,7 @@ export default function DoctorMainScreen() {
     const fetchData = async () => {
       try {
         const doctorRes = await fetch(
-          `http://localhost:3001/doctors?phone=${phone}`,
+          `${API_ENDPOINTS.doctors}?phone=${phone}`,
         );
         const doctorList: Doctor[] = await doctorRes.json();
 
@@ -59,7 +60,7 @@ export default function DoctorMainScreen() {
         setDoctor(loggedInDoctor);
 
         const apptRes = await fetch(
-          `http://localhost:3001/appointments?doctorId=${loggedInDoctor.id}`,
+          `${API_ENDPOINTS.appointments}?doctorId=${loggedInDoctor.id}`,
         );
         const appointments: Appointment[] = await apptRes.json();
         setAppointments(appointments);

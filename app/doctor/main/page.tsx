@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { API_ENDPOINTS } from "@/lib/config";
 import { useForm } from "react-hook-form";
 import { Home, User, CalendarCheck, Users } from "lucide-react";
 
@@ -54,7 +55,7 @@ export default function DoctorMainScreen() {
     const fetchData = async () => {
       try {
         const doctorRes = await fetch(
-          `http://localhost:3001/doctors?phone=${phone}`,
+          `${API_ENDPOINTS.doctors}?phone=${phone}`,
         );
         const doctorList: Doctor[] = await doctorRes.json();
 
@@ -69,7 +70,7 @@ export default function DoctorMainScreen() {
         reset(loggedInDoctor);
 
         const apptRes = await fetch(
-          `http://localhost:3001/appointments?doctorId=${loggedInDoctor.id}`,
+          `${API_ENDPOINTS.appointments}?doctorId=${loggedInDoctor.id}`,
         );
         const appts: Appointment[] = await apptRes.json();
         setAppointments(appts);
@@ -103,7 +104,7 @@ export default function DoctorMainScreen() {
     if (!doctor) return;
 
     try {
-      const res = await fetch(`http://localhost:3001/doctors/${doctor.id}`, {
+      const res = await fetch(`${API_ENDPOINTS.doctors}/${doctor.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(doctor),

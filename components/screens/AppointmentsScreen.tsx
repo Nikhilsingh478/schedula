@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { API_ENDPOINTS } from "@/lib/config";
 import Image from "next/image";
 import { Bell } from "lucide-react";
 
@@ -15,7 +16,7 @@ export default function AppointmentsScreen({ showNotificationIcon = false }: { s
 
   useEffect(() => {
     setLoading(true);
-    fetch("http://localhost:3001/appointments")
+    fetch(API_ENDPOINTS.appointments)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch appointments");
         return res.json();

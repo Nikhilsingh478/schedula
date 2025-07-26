@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useBooking } from "@/context/BookingContext";
+import { API_ENDPOINTS } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Calendar, Clock, Sun, Moon } from "lucide-react";
@@ -20,7 +21,7 @@ export default function BookingSchedule() {
 
   useEffect(() => {
     setLoading(true);
-    fetch("http://localhost:3001/slots")
+    fetch(API_ENDPOINTS.slots)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch slots");
         return res.json();

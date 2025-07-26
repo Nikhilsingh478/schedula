@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Users, Search, Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Doctor } from "@/types/doctor";
+import { API_ENDPOINTS } from "@/lib/config";
 
 export default function HomeDoctorList() {
   const { setCurrentScreen, setBookingData } = useBooking();
@@ -17,7 +18,7 @@ export default function HomeDoctorList() {
 
   useEffect(() => {
     setLoading(true);
-    fetch("http://localhost:3001/doctors")
+    fetch(API_ENDPOINTS.doctors)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch doctors");
         return res.json();
