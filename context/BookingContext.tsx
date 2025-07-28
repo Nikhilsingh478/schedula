@@ -26,8 +26,8 @@ const initialBookingData: BookingData = {
   },
 };
 
-export function BookingProvider({ children }: { children: ReactNode }) {
-  const [currentScreen, setCurrentScreen] = useState("login");
+export function BookingProvider({ children, initialScreen = "login" }: { children: ReactNode; initialScreen?: string }) {
+  const [currentScreen, setCurrentScreen] = useState(initialScreen);
   const [bookingData, setBookingDataState] =
     useState<BookingData>(initialBookingData);
   const [user, setUser] = useState<User | null>(null);

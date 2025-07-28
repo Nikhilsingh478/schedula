@@ -1,6 +1,7 @@
 "use client";
 
 import { FC } from "react";
+import { useRouter } from "next/navigation";
 
 interface BookingSuccessModalProps {
   token: string;
@@ -11,6 +12,14 @@ const BookingSuccessModal: FC<BookingSuccessModalProps> = ({
   token,
   onClose,
 }) => {
+  const router = useRouter();
+
+  const handleViewAppointments = () => {
+    // Navigate to patient dashboard with appointments tab active
+    router.push('/?tab=appointments');
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
       <div className="bg-white rounded-xl shadow-lg max-w-sm w-full p-6 text-center relative">
@@ -51,13 +60,21 @@ const BookingSuccessModal: FC<BookingSuccessModalProps> = ({
           thank you...
         </p>
 
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="mt-6 w-full bg-[#46C2DE] text-white py-2 rounded-lg font-medium text-sm"
-        >
-          Close
-        </button>
+        {/* Action Buttons */}
+        <div className="mt-6 space-y-3">
+          <button
+            onClick={handleViewAppointments}
+            className="w-full bg-[#46C2DE] text-white py-2 rounded-lg font-medium text-sm"
+          >
+            View My Appointments
+          </button>
+          <button
+            onClick={onClose}
+            className="w-full border border-[#46C2DE] text-[#46C2DE] py-2 rounded-lg font-medium text-sm hover:bg-[#46C2DE] hover:text-white transition-colors"
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );

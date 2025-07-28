@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Delete } from "lucide-react";
 import { useBooking } from "@/context/BookingContext";
 
@@ -9,7 +10,7 @@ export default function OTPVerificationScreen() {
   const [otp, setOtp] = useState(["", "", "", ""]);
   const [timer, setTimer] = useState(55);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const { setCurrentScreen, setBookingData } = useBooking();
+  const { setCurrentScreen } = useBooking();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -66,8 +67,14 @@ export default function OTPVerificationScreen() {
   const handleVerify = () => {
     const otpCode = otp.join("");
     if (otpCode.length === 4 && otp.every((digit) => digit !== "")) {
-      setBookingData({}); // Clear previous state (optional)
-      setCurrentScreen("doctorList"); // Go to doctor list
+      // Dummy OTP verification - any 4 digits work
+      const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+      
+      // Set user as verified
+      localStorage.setItem("userVerified", "true");
+      
+      // Proceed to doctor list
+      setCurrentScreen("doctorList");
     }
   };
 
@@ -80,66 +87,140 @@ export default function OTPVerificationScreen() {
     ["*", "0", "backspace"],
   ];
 
+  // Get current user's mobile number for display
+  const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+  const maskedMobile = currentUser.mobile ? 
+    `+91 ${currentUser.mobile.slice(0, 3)} ******${currentUser.mobile.slice(-2)}` : 
+    "+91 111 ******99";
+
   return (
-    <div className="min-h-screen bg-white font-['Poppins'] flex flex-col">
-      {/* Header */}
-      <div className="flex items-center px-6 py-4 border-b border-gray-100">
-        <button className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors">
-          <ArrowLeft className="w-5 h-5 text-gray-700" />
-        </button>
-        <h1 className="flex-1 text-center text-lg font-bold text-gray-900 -ml-9">
-          OTP Code Verification
-        </h1>
+    <div className="min-h-screen bg-gray-50 font-['Poppins'] flex flex-col items-center justify-center px-4 md:px-8">
+      {/* Mobile Layout */}
+      <div className="w-full max-w-md md:hidden bg-white flex flex-col min-h-screen">
+        {/* Header */}
+        <div className="flex items-center px-6 py-4 border-b border-gray-100">
+          <button className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors">
+            <ArrowLeft className="w-5 h-5 text-gray-700" />
+          </button>
+          <h1 className="flex-1 text-center text-lg font-bold text-gray-900 -ml-9">
+            OTP Code Verification
+          </h1>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 px-6 py-8 flex flex-col">
+          {/* Instruction */}
+          <div className="text-center mb-12">
+            <p className="text-gray-500 text-sm">
+              Code has been sent to {maskedMobile}
+            </p>
+          </div>
+
+          {/* OTP Fields */}
+          <div className="flex justify-center space-x-4 mb-8">
+            {otp.map((digit, index) => (
+              <input
+                key={index}
+                ref={(el) => (inputRefs.current[index] = el)}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={digit}
+                onChange={(e) => handleInputChange(index, e.target.value)}
+                className="w-14 h-14 text-center text-2xl font-bold border border-gray-300 rounded-lg focus:border-[#46c2de] focus:ring-2 focus:ring-[#46c2de]/20 focus:outline-none transition-all"
+              />
+            ))}
+          </div>
+
+          {/* Timer */}
+          <div className="text-center mb-8">
+            <p className="text-gray-600 text-sm">
+              Resend code in{" "}
+              <span className="text-[#46c2de] font-semibold">{timer} s</span>
+            </p>
+          </div>
+
+          {/* Verify Button */}
+          <Button
+            onClick={handleVerify}
+            disabled={!isVerifyEnabled}
+            className={`w-full h-12 font-medium rounded-lg transition-all duration-200 mb-12 ${
+              isVerifyEnabled
+                ? "bg-[#46c2de] hover:bg-[#3bb5d1] text-white shadow-sm hover:shadow-md active:scale-[0.98]"
+                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            Verify
+          </Button>
+
+          {/* Keypad */}
+          <div className="mt-auto">
+            <div className="grid grid-cols-3 gap-4 max-w-xs mx-auto">
+              {keypadNumbers.flat().map((key, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleKeypadPress(key)}
+                  className="h-14 flex items-center justify-center text-xl font-semibold text-gray-800 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-all duration-150 active:scale-95"
+                >
+                  {key === "backspace" ? <Delete className="w-6 h-6" /> : key}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 px-6 py-8 flex flex-col">
-        {/* Instruction */}
-        <div className="text-center mb-12">
-          <p className="text-gray-500 text-sm">
-            Code has been sent to +91 111 ******99
-          </p>
-        </div>
+      {/* Desktop Layout - Card Centered */}
+      <Card className="hidden md:block w-full max-w-md shadow-xl border-0">
+        <CardContent className="p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              OTP Code Verification
+            </h1>
+            <p className="text-gray-500 text-sm">
+              Code has been sent to {maskedMobile}
+            </p>
+          </div>
 
-        {/* OTP Fields */}
-        <div className="flex justify-center space-x-4 mb-8">
-          {otp.map((digit, index) => (
-            <input
-              key={index}
-              ref={(el) => (inputRefs.current[index] = el)}
-              type="text"
-              inputMode="numeric"
-              maxLength={1}
-              value={digit}
-              onChange={(e) => handleInputChange(index, e.target.value)}
-              className="w-14 h-14 text-center text-2xl font-bold border border-gray-300 rounded-lg focus:border-[#46c2de] focus:ring-2 focus:ring-[#46c2de]/20 focus:outline-none transition-all"
-            />
-          ))}
-        </div>
+          {/* OTP Fields */}
+          <div className="flex justify-center space-x-4 mb-8">
+            {otp.map((digit, index) => (
+              <input
+                key={index}
+                ref={(el) => (inputRefs.current[index] = el)}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={digit}
+                onChange={(e) => handleInputChange(index, e.target.value)}
+                className="w-16 h-16 text-center text-2xl font-bold border border-gray-300 rounded-lg focus:border-[#46c2de] focus:ring-2 focus:ring-[#46c2de]/20 focus:outline-none transition-all"
+              />
+            ))}
+          </div>
 
-        {/* Timer */}
-        <div className="text-center mb-8">
-          <p className="text-gray-600 text-sm">
-            Resend code in{" "}
-            <span className="text-[#46c2de] font-semibold">{timer} s</span>
-          </p>
-        </div>
+          {/* Timer */}
+          <div className="text-center mb-8">
+            <p className="text-gray-600 text-sm">
+              Resend code in{" "}
+              <span className="text-[#46c2de] font-semibold">{timer} s</span>
+            </p>
+          </div>
 
-        {/* Verify Button */}
-        <Button
-          onClick={handleVerify}
-          disabled={!isVerifyEnabled}
-          className={`w-full h-12 font-medium rounded-lg transition-all duration-200 mb-12 ${
-            isVerifyEnabled
-              ? "bg-[#46c2de] hover:bg-[#3bb5d1] text-white shadow-sm hover:shadow-md active:scale-[0.98]"
-              : "bg-gray-200 text-gray-400 cursor-not-allowed"
-          }`}
-        >
-          Verify
-        </Button>
+          {/* Verify Button */}
+          <Button
+            onClick={handleVerify}
+            disabled={!isVerifyEnabled}
+            className={`w-full h-12 font-medium rounded-lg transition-all duration-200 mb-8 ${
+              isVerifyEnabled
+                ? "bg-[#46c2de] hover:bg-[#3bb5d1] text-white shadow-sm hover:shadow-md active:scale-[0.98]"
+                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            Verify
+          </Button>
 
-        {/* Keypad */}
-        <div className="mt-auto">
+          {/* Keypad */}
           <div className="grid grid-cols-3 gap-4 max-w-xs mx-auto">
             {keypadNumbers.flat().map((key, index) => (
               <button
@@ -151,8 +232,8 @@ export default function OTPVerificationScreen() {
               </button>
             ))}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

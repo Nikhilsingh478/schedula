@@ -46,6 +46,11 @@ export default function DoctorProfileView({
 
   const doctorData = doctor || defaultDoctor;
 
+  const handleBookAppointment = () => {
+    // Navigate to the original ScheduleSlot page with doctor ID
+    router.push(`/ScheduleSlot?id=${doctorData.id}`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top Navigation */}
@@ -87,9 +92,32 @@ export default function DoctorProfileView({
           </div>
         </div>
 
+        {/* Doctor Stats */}
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <h3 className="text-lg font-bold text-gray-900 mb-3">Doctor Information</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center p-3 bg-gray-50 rounded-lg">
+              <p className="text-2xl font-bold text-[#46C2DE]">{doctorData.experience}+</p>
+              <p className="text-sm text-gray-600">Years Experience</p>
+            </div>
+            <div className="text-center p-3 bg-gray-50 rounded-lg">
+              <p className="text-2xl font-bold text-[#46C2DE]">{doctorData.patients?.toLocaleString() || "500+"}</p>
+              <p className="text-sm text-gray-600">Patients Treated</p>
+            </div>
+            <div className="text-center p-3 bg-gray-50 rounded-lg">
+              <p className="text-2xl font-bold text-[#46C2DE]">{doctorData.rating || "4.5"}</p>
+              <p className="text-sm text-gray-600">⭐ Rating</p>
+            </div>
+            <div className="text-center p-3 bg-gray-50 rounded-lg">
+              <p className="text-2xl font-bold text-[#46C2DE]">24/7</p>
+              <p className="text-sm text-gray-600">Support</p>
+            </div>
+          </div>
+        </div>
+
         {/* Services as Tags */}
         <div className="space-y-3">
-          <h3 className="text-lg font-bold text-gray-900">Services</h3>
+          <h3 className="text-lg font-bold text-gray-900">Specializations & Services</h3>
           <div className="flex flex-wrap gap-2">
             {doctorData.services.split(",").map((service, i) => (
               <span
@@ -105,23 +133,56 @@ export default function DoctorProfileView({
         {/* About Doctor */}
         <div className="space-y-3">
           <h3 className="text-lg font-bold text-gray-900">About Doctor</h3>
-          <p className="text-sm text-gray-600 leading-relaxed">
-            {doctorData.about}
-          </p>
+          <div className="bg-white rounded-xl p-4 shadow-sm">
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {doctorData.about}
+            </p>
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">Consultation Fee:</span>
+                <span className="font-semibold text-[#46C2DE]">₹500 - ₹1000</span>
+              </div>
+              <div className="flex items-center justify-between text-sm mt-2">
+                <span className="text-gray-500">Languages:</span>
+                <span className="font-semibold text-gray-700">English, Hindi, Marathi</span>
+              </div>
+              <div className="flex items-center justify-between text-sm mt-2">
+                <span className="text-gray-500">Consultation Type:</span>
+                <span className="font-semibold text-gray-700">In-person & Video</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Earliest Slot → Link to ScheduleSlot */}
-        <div
-          onClick={() => router.push(`/ScheduleSlot?id=${doctorData.id}`)}
-          className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition"
-        >
+        {/* Available Slots */}
+        <div className="space-y-3">
+          <h3 className="text-lg font-bold text-gray-900">Available Time Slots</h3>
+          <div className="bg-white rounded-xl p-4 shadow-sm">
+            <div className="grid grid-cols-2 gap-2">
+              {doctorData.slots.map((slot, index) => (
+                <div
+                  key={index}
+                  className="text-center p-2 bg-gray-50 rounded-lg text-sm font-medium text-gray-700"
+                >
+                  {slot}
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-3 text-center">
+              Slots are 15 minutes each • Book your preferred time
+            </p>
+          </div>
+        </div>
+
+        {/* Earliest Slot */}
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center gap-4">
             <Calendar className="h-6 w-6 text-[#46C2DE]" />
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-900 mb-1">
-                Earliest Available Slot
+                Next Available Slot
               </p>
-              <p className="text-sm text-gray-600">{doctorData.slots[0]}</p>
+              <p className="text-sm text-gray-600">{doctorData.slots[0]} • Today</p>
             </div>
             <ArrowRight className="h-5 w-5 text-gray-400" />
           </div>
@@ -130,7 +191,10 @@ export default function DoctorProfileView({
 
       {/* CTA */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
-        <button className="w-full bg-[#46C2DE] text-white font-medium py-4 rounded-full text-lg">
+        <button 
+          onClick={handleBookAppointment}
+          className="w-full bg-[#46C2DE] text-white font-medium py-4 rounded-full text-lg hover:bg-[#3bb0ca] transition-colors"
+        >
           Book appointment
         </button>
       </div>

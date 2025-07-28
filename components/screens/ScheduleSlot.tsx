@@ -1,20 +1,82 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Calendar } from "lucide-react";
 import BookingSuccessModal from "@/components/ScheduleSlot/BookingSuccessModal";
+import { API_ENDPOINTS } from "@/lib/config";
+
+interface Doctor {
+  id: string;
+  name: string;
+  specialization: string;
+  qualification: string;
+  image: string;
+  slots: string[];
+}
 
 export default function ScheduleSlot() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const doctorId = searchParams.get('id');
 
-  const doctor = {
+  const [doctor, setDoctor] = useState<Doctor | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Function to handle back navigation
+  const handleBackNavigation = () => {
+    // Navigate to patient dashboard with appointments tab active
+    router.push('/?tab=appointments');
+  };
+
+  // Default doctor data (fallback)
+  const defaultDoctor = {
     name: "Dr. Kumar Das",
-    specialty: "Cardiologist - Dombivali",
+    specialization: "Cardiologist - Dombivali",
     qualification: "MBBS ,MD (Internal Medicine)",
     image:
       "https://images.pexels.com/photos/8376317/pexels-photo-8376317.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop",
   };
+
+  useEffect(() => {
+    const fetchDoctorData = async () => {
+      if (!doctorId) {
+        setDoctor(defaultDoctor);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(API_ENDPOINTS.doctors);
+        if (!response.ok) {
+          throw new Error("Failed to fetch doctor data");
+        }
+        
+        const doctors = await response.json();
+        const foundDoctor = doctors.find((d: any) => d.id === doctorId);
+        
+        if (foundDoctor) {
+          setDoctor({
+            id: foundDoctor.id,
+            name: foundDoctor.name,
+            specialization: foundDoctor.specialization,
+            qualification: foundDoctor.qualification,
+            image: foundDoctor.image,
+            slots: foundDoctor.slots || [],
+          });
+        } else {
+          setDoctor(defaultDoctor);
+        }
+      } catch (error) {
+        console.error("Error fetching doctor data:", error);
+        setDoctor(defaultDoctor);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDoctorData();
+  }, [doctorId]);
 
   const dates = ["13 MON", "14 TUE", "16 WED", "17 THU", "18 FRI"];
   const [selectedDate, setSelectedDate] = useState("14 TUE");
@@ -39,24 +101,91 @@ export default function ScheduleSlot() {
     "05:00 PM – 05:15PM",
   ];
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
     if (!selectedSlot) {
       alert("Please select a slot before booking.");
       return;
     }
 
-    // Simulate token generation (replace later with backend-generated token)
-    const generatedToken = "A" + Math.floor(Math.random() * 100 + 1).toString();
-    setToken(generatedToken);
-    setShowModal(true);
+    // Get current user from localStorage
+    const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    
+    if (!currentUser.fullName) {
+      alert("Please login to book an appointment.");
+      return;
+    }
+
+    // Generate token
+    const generatedToken = "A" + Math.floor(Math.random() * 1000 + 1).toString().padStart(3, '0');
+
+    // Create new appointment with enhanced patient data
+    const newAppointment = {
+      id: `appt_${Date.now()}`,
+      doctorId: doctor?.id || "dr1",
+      doctorName: doctor?.name || "Doctor",
+      date: selectedDate,
+      time: selectedSlot,
+      patientName: currentUser.fullName,
+      patientPhone: currentUser.mobile || "+1234567890",
+      patientEmail: currentUser.email || "",
+      patientAge: currentUser.age || "Not specified",
+      patientGender: currentUser.gender || "Not specified",
+      symptoms: "General consultation", // Can be enhanced later
+      token: generatedToken,
+      status: "Confirmed",
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      // Save to JSON server first
+      const response = await fetch(API_ENDPOINTS.appointments, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newAppointment),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save to server');
+      }
+
+      // Also save to localStorage as backup
+      const existingAppointments = JSON.parse(localStorage.getItem("appointments") || "[]");
+      const updatedAppointments = [...existingAppointments, newAppointment];
+      localStorage.setItem("appointments", JSON.stringify(updatedAppointments));
+
+      setToken(generatedToken);
+      setShowModal(true);
+    } catch (error) {
+      console.error("Error saving appointment:", error);
+      // Fallback to localStorage only
+      const existingAppointments = JSON.parse(localStorage.getItem("appointments") || "[]");
+      const updatedAppointments = [...existingAppointments, newAppointment];
+      localStorage.setItem("appointments", JSON.stringify(updatedAppointments));
+      
+      setToken(generatedToken);
+      setShowModal(true);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white max-w-sm mx-auto font-sans flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#46C2DE] mx-auto mb-4"></div>
+          <p className="text-[#46C2DE] font-semibold">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white max-w-sm mx-auto font-sans relative">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-[#46C2DE] text-white py-4 px-4 flex items-center gap-3">
         <button
-          onClick={() => router.back()}
+          onClick={handleBackNavigation}
           className="p-1 rounded-full hover:bg-[#ffffff33]"
         >
           <ArrowLeft className="h-6 w-6" />
@@ -67,14 +196,14 @@ export default function ScheduleSlot() {
       {/* Doctor Info */}
       <div className="bg-white rounded-xl shadow-sm mx-4 mt-6 p-4 flex items-center gap-4 border border-gray-200">
         <img
-          src={doctor.image}
-          alt={doctor.name}
+          src={doctor?.image || defaultDoctor.image}
+          alt={doctor?.name || defaultDoctor.name}
           className="w-14 h-14 rounded-full object-cover"
         />
         <div>
-          <h2 className="text-[16px] font-bold">{doctor.name}</h2>
-          <p className="text-[13px] text-gray-600">{doctor.specialty}</p>
-          <p className="text-[13px] text-gray-500">{doctor.qualification}</p>
+          <h2 className="text-[16px] font-bold">{doctor?.name || defaultDoctor.name}</h2>
+          <p className="text-[13px] text-gray-600">{doctor?.specialization || defaultDoctor.specialization}</p>
+          <p className="text-[13px] text-gray-500">{doctor?.qualification || defaultDoctor.qualification}</p>
         </div>
       </div>
 

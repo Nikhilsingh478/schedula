@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { BookingProvider, useBooking } from "@/context/BookingContext";
 
 import UserLoginScreen from "@/components/screens/UserLoginScreen";
+import UserSignUpScreen from "@/components/screens/UserSignUpScreen";
 import OTPVerificationScreen from "@/components/screens/OTPVerificationScreen";
 import PatientDashboardScreen from "@/components/screens/PatientDashboardScreen";
 import DoctorProfilePublic from "@/components/screens/DoctorProfilePublic";
 import BookingSchedule from "@/components/screens/BookingSchedule";
 import BookingConfirmation from "@/components/screens/BookingConfirmation";
 import PatientDetailsUnfilled from "@/components/screens/PatientDetailsUnfilled";
+import AppointmentsScreen from "@/components/screens/AppointmentsScreen";
 import { UserIcon, Stethoscope } from "lucide-react";
 
 function RoleSelectionScreen({
@@ -54,6 +56,8 @@ function PatientAppContent() {
   switch (currentScreen) {
     case "login":
       return <UserLoginScreen />;
+    case "signup":
+      return <UserSignUpScreen />;
     case "otp":
       return <OTPVerificationScreen />;
     case "doctorList":
@@ -66,6 +70,8 @@ function PatientAppContent() {
       return <BookingConfirmation />;
     case "patientDetails":
       return <PatientDetailsUnfilled />;
+    case "appointments":
+      return <PatientDashboardScreen />; // Show dashboard with appointments tab
     default:
       return <UserLoginScreen />;
   }
@@ -73,7 +79,40 @@ function PatientAppContent() {
 
 export default function Home() {
   const router = useRouter();
-  const [role, setRole] = useState<"patient" | null>(null); // default: no role selected
+  const searchParams = useSearchParams();
+  const [role, setRole] = useState<"patient" | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [initialScreen, setInitialScreen] = useState<string>("login");
+
+  useEffect(() => {
+    // Only check for patient authentication
+    const userRole = localStorage.getItem("userRole");
+    const currentUser = localStorage.getItem("currentUser");
+    const userVerified = localStorage.getItem("userVerified");
+
+    if (userRole === "patient" && currentUser && userVerified) {
+      // Patient is logged in, show patient dashboard
+      setRole("patient");
+      
+      // Check URL parameters for tab navigation
+      const tabParam = searchParams.get('tab');
+      if (tabParam === 'appointments') {
+        setInitialScreen("appointments");
+      } else {
+        // Check if user is returning from booking (show appointments)
+        const returnFromBooking = localStorage.getItem("returnFromBooking");
+        if (returnFromBooking === "true") {
+          setInitialScreen("appointments");
+          localStorage.removeItem("returnFromBooking"); // Clear the flag
+        }
+      }
+    } else {
+      // No valid patient authentication, show role selection
+      setRole(null);
+    }
+    
+    setLoading(false);
+  }, [searchParams]);
 
   const handleRoleSelect = (selectedRole: "patient" | "doctor") => {
     if (selectedRole === "doctor") {
@@ -85,12 +124,24 @@ export default function Home() {
     }
   };
 
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#46C2DE] mx-auto mb-4"></div>
+          <p className="text-[#46C2DE] font-semibold text-lg">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!role) {
     return <RoleSelectionScreen onSelect={handleRoleSelect} />;
   }
 
   return (
-    <BookingProvider>
+    <BookingProvider initialScreen={initialScreen}>
       <PatientAppContent />
     </BookingProvider>
   );
