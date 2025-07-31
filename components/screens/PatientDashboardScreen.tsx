@@ -55,7 +55,6 @@ export default function PatientDashboardScreen() {
   const [authChecked, setAuthChecked] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { bookingSuccess } = useBooking();
 
   useEffect(() => {
     // Get current user from localStorage
@@ -156,12 +155,7 @@ export default function PatientDashboardScreen() {
     }
   }, [searchParams]);
 
-  useEffect(() => {
-    if (bookingSuccess) {
-      setActiveTab("appointments");
-      localStorage.setItem("returnFromBooking", "true"); // Set flag to return to appointments
-    }
-  }, [bookingSuccess]);
+
 
   const toggleFavorite = (doctorId: string) => {
     setDoctors((prev) =>

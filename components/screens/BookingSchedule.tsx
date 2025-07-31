@@ -250,7 +250,7 @@ export default function BookingSchedule() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Specialty:</span>
-                  <span className="font-medium text-gray-900">{doctor.specialty}</span>
+                  <span className="font-medium text-gray-900">{doctor.specialization}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Date:</span>

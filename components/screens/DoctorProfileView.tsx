@@ -48,7 +48,7 @@ export default function DoctorProfileView({
 
   const handleBookAppointment = () => {
     // Navigate to the original ScheduleSlot page with doctor ID
-    router.push(`/ScheduleSlot?id=${doctorData.id}`);
+    router.push(`/schedule-slot?id=${doctorData.id}`);
   };
 
   return (

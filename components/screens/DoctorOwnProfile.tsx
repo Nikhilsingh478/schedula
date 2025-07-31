@@ -89,7 +89,7 @@ export default function DoctorOwnProfile() {
                 <Users className="w-6 h-6 text-blue-600" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900">
-                {doctor.patients.toLocaleString()}
+                {doctor.patients?.toLocaleString() || "0"}
               </h3>
               <p className="text-gray-600">Total Patients</p>
             </CardContent>
@@ -142,7 +142,7 @@ export default function DoctorOwnProfile() {
                     {doctor.name}
                   </h2>
                   <p className="text-lg text-blue-600 font-medium">
-                    {doctor.specialty}
+                    {doctor.specialization}
                   </p>
                 </div>
 
@@ -182,7 +182,7 @@ export default function DoctorOwnProfile() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {doctor.services.split(", ").map((service, index) => (
+                {doctor.services?.split(", ").map((service, index) => (
                   <Badge
                     key={index}
                     variant="secondary"

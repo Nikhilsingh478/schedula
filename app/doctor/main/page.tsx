@@ -203,8 +203,8 @@ export default function DoctorMainScreen() {
         const mockAppointments: Appointment[] = [
           {
             id: "a101",
-            doctorId: doctorData?.id || "dr1",
-            doctorName: doctorData?.name || "Doctor",
+            doctorId: doctor?.id || "dr1",
+            doctorName: doctor?.name || "Doctor",
             date: "2025-01-20",
             time: "09:00 AM",
             patientName: "John Doe",
@@ -218,8 +218,8 @@ export default function DoctorMainScreen() {
           },
           {
             id: "a102",
-            doctorId: doctorData?.id || "dr1",
-            doctorName: doctorData?.name || "Doctor",
+            doctorId: doctor?.id || "dr1",
+            doctorName: doctor?.name || "Doctor",
             date: "2025-01-21",
             time: "10:00 AM",
             patientName: "Jane Smith",
@@ -233,8 +233,8 @@ export default function DoctorMainScreen() {
           },
           {
             id: "a103",
-            doctorId: doctorData?.id || "dr1",
-            doctorName: doctorData?.name || "Doctor",
+            doctorId: doctor?.id || "dr1",
+            doctorName: doctor?.name || "Doctor",
             date: "2025-01-22",
             time: "02:00 PM",
             patientName: "Mike Johnson",

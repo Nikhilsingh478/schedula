@@ -1,14 +1,14 @@
 export interface Doctor {
   id: string;
   name: string;
-  specialty: string;
+  specialization: string;
   qualification: string;
-  location: string;
-  patients: number;
-  experience: number;
-  rating: number;
-  about: string;
-  services: string;
+  location?: string;
+  patients?: number;
+  experience?: number;
+  rating?: number;
+  about?: string;
+  services?: string;
   slots: string[];
   image?: string;
   fee?: number;

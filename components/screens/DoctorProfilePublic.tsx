@@ -70,7 +70,7 @@ export default function DoctorProfilePublic() {
                       {doctor.name}
                     </h2>
                     <p className="text-lg text-blue-600 font-medium">
-                      {doctor.specialty}
+                      {doctor.specialization}
                     </p>
                     <p className="text-gray-600">{doctor.qualification}</p>
                   </div>
@@ -90,7 +90,7 @@ export default function DoctorProfilePublic() {
                       <span className="text-sm">Patients</span>
                     </div>
                     <p className="text-lg font-semibold text-gray-900">
-                      {doctor.patients.toLocaleString()}
+                      {doctor.patients?.toLocaleString() || "0"}
                     </p>
                   </div>
                   <div className="text-center">
@@ -138,7 +138,7 @@ export default function DoctorProfilePublic() {
           <CardContent>
             <div className="flex flex-wrap gap-2">
               {doctor.services
-                .split(", ")
+                ?.split(", ")
                 .map((service: string, index: number) => (
                   <Badge
                     key={index}

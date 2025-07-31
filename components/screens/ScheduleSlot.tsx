@@ -5,15 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Calendar } from "lucide-react";
 import BookingSuccessModal from "@/components/ScheduleSlot/BookingSuccessModal";
 import { API_ENDPOINTS } from "@/lib/config";
-
-interface Doctor {
-  id: string;
-  name: string;
-  specialization: string;
-  qualification: string;
-  image: string;
-  slots: string[];
-}
+import { Doctor } from "@/types/doctor";
 
 export default function ScheduleSlot() {
   const router = useRouter();
@@ -30,12 +22,14 @@ export default function ScheduleSlot() {
   };
 
   // Default doctor data (fallback)
-  const defaultDoctor = {
+  const defaultDoctor: Doctor = {
+    id: "default-doctor",
     name: "Dr. Kumar Das",
     specialization: "Cardiologist - Dombivali",
     qualification: "MBBS ,MD (Internal Medicine)",
     image:
       "https://images.pexels.com/photos/8376317/pexels-photo-8376317.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop",
+    slots: [],
   };
 
   useEffect(() => {

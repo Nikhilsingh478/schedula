@@ -1,4 +1,4 @@
-// app/ScheduleSlot/page.tsx
+// app/schedule-slot/page.tsx
 "use client";
 
 import ScheduleSlot from "@/components/screens/ScheduleSlot";

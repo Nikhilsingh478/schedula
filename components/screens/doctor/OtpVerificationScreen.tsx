@@ -15,12 +15,14 @@ export default function OtpVerificationScreen() {
     document.body.classList.add("font-poppins");
 
     // Check if doctor is already logged in and verified
-    const currentDoctor = localStorage.getItem("currentDoctor");
-    const doctorVerified = localStorage.getItem("doctorVerified");
-    const userRole = localStorage.getItem("userRole");
+    if (typeof window !== 'undefined') {
+      const currentDoctor = localStorage.getItem("currentDoctor");
+      const doctorVerified = localStorage.getItem("doctorVerified");
+      const userRole = localStorage.getItem("userRole");
 
-    if (currentDoctor && doctorVerified && userRole === "doctor") {
-      router.replace("/doctor/main");
+      if (currentDoctor && doctorVerified && userRole === "doctor") {
+        router.replace("/doctor/main");
+      }
     }
   }, [router]);
 
@@ -76,10 +78,12 @@ export default function OtpVerificationScreen() {
       return alert("Please enter a valid 4-digit OTP.");
 
     // Dummy OTP verification - any 4 digits work
-    const currentDoctor = JSON.parse(localStorage.getItem("currentDoctor") || "{}");
-    
-    // Set doctor as verified
-    localStorage.setItem("doctorVerified", "true");
+    if (typeof window !== 'undefined') {
+      const currentDoctor = JSON.parse(localStorage.getItem("currentDoctor") || "{}");
+      
+      // Set doctor as verified
+      localStorage.setItem("doctorVerified", "true");
+    }
     
     // Proceed to doctor main screen
     router.push("/doctor/main");
@@ -93,7 +97,7 @@ export default function OtpVerificationScreen() {
   ];
 
   // Get current doctor's mobile number for display
-  const currentDoctor = JSON.parse(localStorage.getItem("currentDoctor") || "{}");
+  const currentDoctor = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("currentDoctor") || "{}") : {};
   const maskedMobile = currentDoctor.phone ? 
     `+91 ${currentDoctor.phone.slice(0, 3)} ******${currentDoctor.phone.slice(-2)}` : 
     "+91 111 ******99";

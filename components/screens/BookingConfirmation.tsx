@@ -80,7 +80,7 @@ export default function BookingConfirmation() {
               />
               <div>
                 <h3 className="font-semibold text-gray-900">{doctor.name}</h3>
-                <p className="text-sm text-blue-600">{doctor.specialty}</p>
+                <p className="text-sm text-blue-600">{doctor.specialization}</p>
                 <p className="text-xs text-gray-500">{doctor.location}</p>
               </div>
             </div>

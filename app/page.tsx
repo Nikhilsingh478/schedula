@@ -86,28 +86,33 @@ export default function Home() {
 
   useEffect(() => {
     // Only check for patient authentication
-    const userRole = localStorage.getItem("userRole");
-    const currentUser = localStorage.getItem("currentUser");
-    const userVerified = localStorage.getItem("userVerified");
+    if (typeof window !== 'undefined') {
+      const userRole = localStorage.getItem("userRole");
+      const currentUser = localStorage.getItem("currentUser");
+      const userVerified = localStorage.getItem("userVerified");
 
-    if (userRole === "patient" && currentUser && userVerified) {
-      // Patient is logged in, show patient dashboard
-      setRole("patient");
-      
-      // Check URL parameters for tab navigation
-      const tabParam = searchParams.get('tab');
-      if (tabParam === 'appointments') {
-        setInitialScreen("appointments");
-      } else {
-        // Check if user is returning from booking (show appointments)
-        const returnFromBooking = localStorage.getItem("returnFromBooking");
-        if (returnFromBooking === "true") {
+      if (userRole === "patient" && currentUser && userVerified) {
+        // Patient is logged in, show patient dashboard
+        setRole("patient");
+        
+        // Check URL parameters for tab navigation
+        const tabParam = searchParams.get('tab');
+        if (tabParam === 'appointments') {
           setInitialScreen("appointments");
-          localStorage.removeItem("returnFromBooking"); // Clear the flag
+        } else {
+          // Check if user is returning from booking (show appointments)
+          const returnFromBooking = localStorage.getItem("returnFromBooking");
+          if (returnFromBooking === "true") {
+            setInitialScreen("appointments");
+            localStorage.removeItem("returnFromBooking"); // Clear the flag
+          }
         }
+      } else {
+        // No valid patient authentication, show role selection
+        setRole(null);
       }
     } else {
-      // No valid patient authentication, show role selection
+      // Server-side rendering, show role selection
       setRole(null);
     }
     
@@ -115,12 +120,14 @@ export default function Home() {
   }, [searchParams]);
 
   const handleRoleSelect = (selectedRole: "patient" | "doctor") => {
-    if (selectedRole === "doctor") {
-      localStorage.setItem("userRole", "doctor");
-      router.replace("/doctor/login");
-    } else {
-      localStorage.setItem("userRole", "patient");
-      setRole("patient");
+    if (typeof window !== 'undefined') {
+      if (selectedRole === "doctor") {
+        localStorage.setItem("userRole", "doctor");
+        router.replace("/doctor/login");
+      } else {
+        localStorage.setItem("userRole", "patient");
+        setRole("patient");
+      }
     }
   };
 

@@ -875,7 +875,7 @@
       "patientGender": "Not specified",
       "symptoms": "General consultation",
       "token": "A372",
-      "status": "Confirmed",
+      "status": "cancelled",
       "createdAt": "2025-07-28T16:13:00.982Z"
     },
     {
@@ -891,8 +891,24 @@
       "patientGender": "Not specified",
       "symptoms": "General consultation",
       "token": "A513",
-      "status": "Confirmed",
+      "status": "cancelled",
       "createdAt": "2025-07-28T16:22:52.475Z"
+    },
+    {
+      "id": "appt_1753967058811",
+      "doctorId": "dr1",
+      "doctorName": "Dr. Aman Bumrow",
+      "date": "14 TUE",
+      "time": "10:30 AM – 10:45AM",
+      "patientName": "nikhil singh ",
+      "patientPhone": "9503378187",
+      "patientEmail": "avg8787123478@gmail.com",
+      "patientAge": "Not specified",
+      "patientGender": "Not specified",
+      "symptoms": "General consultation",
+      "token": "A721",
+      "status": "cancelled",
+      "createdAt": "2025-07-31T13:04:18.811Z"
     }
   ],
   "patients": [

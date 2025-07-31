@@ -43,7 +43,7 @@ export default function HomeDoctorList() {
     const term = searchTerm.toLowerCase();
     return (
       doctor.name.toLowerCase().includes(term) ||
-      (doctor.specialty && doctor.specialty.toLowerCase().includes(term)) ||
+      (doctor.specialization && doctor.specialization.toLowerCase().includes(term)) ||
       (doctor.location && doctor.location.toLowerCase().includes(term))
     );
   });
@@ -142,7 +142,7 @@ export default function HomeDoctorList() {
                         {doctor.name}
                       </h2>
                             <p className="text-[#46c2de] font-medium text-sm md:text-base">
-                        {doctor.specialty}
+                        {doctor.specialization}
                       </p>
                             <p className="text-sm text-gray-500 line-clamp-1">
                         {doctor.qualification}
@@ -166,14 +166,14 @@ export default function HomeDoctorList() {
                     </div>
                     <div className="flex items-center space-x-1">
                       <Users className="w-4 h-4" />
-                      <span>{doctor.patients.toLocaleString()} patients</span>
+                      <span>{doctor.patients?.toLocaleString() || "0"} patients</span>
                     </div>
                   </div>
 
                     {/* Services */}
                     <div className="flex flex-wrap gap-2">
                     {doctor.services
-                      .split(", ")
+                      ?.split(", ")
                         .slice(0, 3)
                       .map((service, idx) => (
                         <Badge

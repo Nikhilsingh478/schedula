@@ -23,7 +23,7 @@ export default function AppointmentsScreen({ showNotificationIcon = false }: { s
       try {
         // Fetch from JSON server
         const jsonServerResponse = await fetch(API_ENDPOINTS.appointments);
-        let allAppointments = [];
+        let allAppointments: any[] = [];
         
         if (jsonServerResponse.ok) {
           const jsonServerAppointments = await jsonServerResponse.json();
