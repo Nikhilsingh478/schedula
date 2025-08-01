@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useBooking } from "@/context/BookingContext";
+import { useNotification } from "@/context/NotificationContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +20,7 @@ interface LoginFormData {
 export default function UserLoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const { setCurrentScreen } = useBooking();
+  const { error: showError } = useNotification();
   const {
     register,
     handleSubmit,
@@ -37,19 +39,34 @@ export default function UserLoginScreen() {
     const user = users.find((u: any) => u.mobile === data.mobile);
     
     if (!user) {
-      alert("User not found! Please sign up first.");
+      showError("User Not Found", "User not found! Please sign up first.");
       return;
     }
     
     // Check password
     if (user.password !== data.password) {
-      alert("Invalid password!");
+      showError("Invalid Password", "Invalid password!");
       return;
     }
     
-    // Store logged in user info
-    localStorage.setItem("currentUser", JSON.stringify(user));
-    localStorage.setItem("userRole", "patient");
+    // Store only essential user info to avoid quota issues
+    try {
+      const essentialUserData = {
+        id: user.id,
+        fullName: user.fullName,
+        mobile: user.mobile,
+        email: user.email,
+        role: user.role
+      };
+      
+      localStorage.setItem("currentUser", JSON.stringify(essentialUserData));
+      localStorage.setItem("userRole", "patient");
+      localStorage.setItem("userVerified", "false");
+    } catch (error) {
+      console.error("Failed to store user data:", error);
+      showError("Storage Error", "Failed to save login data. Please try again.");
+      return;
+    }
     
     // Proceed to OTP verification
     setCurrentScreen("otp");
@@ -210,8 +227,8 @@ export default function UserLoginScreen() {
 
           {/* Footer */}
           <div className="text-center mt-8">
-            <p className="text-gray-600">
-              Don't have an account?{" "}
+                      <p className="text-gray-600">
+            Don&apos;t have an account?{" "}
               <button 
                 onClick={handleSignUp}
                 className="text-[#46c2de] font-semibold hover:text-[#3bb5d1] transition-colors"
@@ -367,8 +384,8 @@ export default function UserLoginScreen() {
 
           {/* Footer */}
           <div className="text-center mt-8">
-            <p className="text-gray-600">
-              Don't have an account?{" "}
+                    <p className="text-gray-600">
+          Don&apos;t have an account?{" "}
               <button 
                 onClick={handleSignUp}
                 className="text-[#46c2de] font-semibold hover:text-[#3bb5d1] transition-colors"

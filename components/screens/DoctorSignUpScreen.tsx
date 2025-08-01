@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Eye, EyeOff, ArrowLeft, Upload, X } from "lucide-react";
 import { API_ENDPOINTS } from "@/lib/config";
+import { useNotification } from "@/context/NotificationContext";
 
 interface DoctorSignUpFormData {
   fullName: string;
@@ -27,6 +28,7 @@ export default function DoctorSignUpScreen() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const router = useRouter();
+  const { success, error: showError } = useNotification();
   const {
     register,
     handleSubmit,
@@ -41,13 +43,13 @@ export default function DoctorSignUpScreen() {
     if (file) {
       // Check file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert("Image size should be less than 5MB");
+        showError("File Too Large", "Image size should be less than 5MB");
         return;
       }
 
       // Check file type
       if (!file.type.startsWith('image/')) {
-        alert("Please select a valid image file");
+        showError("Invalid File Type", "Please select a valid image file");
         return;
       }
 
@@ -68,7 +70,7 @@ export default function DoctorSignUpScreen() {
   const onSubmit = async (data: DoctorSignUpFormData) => {
     // Validate passwords match
     if (data.password !== data.confirmPassword) {
-      alert("Passwords do not match!");
+      showError("Password Mismatch", "Passwords do not match!");
       return;
     }
 
@@ -78,7 +80,7 @@ export default function DoctorSignUpScreen() {
     // Check if doctor already exists
     const doctorExists = existingDoctors.find((doctor: any) => doctor.phone === data.mobile);
     if (doctorExists) {
-      alert("Doctor with this mobile number already exists!");
+      showError("Account Exists", "Doctor with this mobile number already exists!");
       return;
     }
 
@@ -131,14 +133,14 @@ export default function DoctorSignUpScreen() {
       localStorage.setItem("doctors", JSON.stringify(updatedDoctors));
 
       // Show success message and redirect to login
-      alert("Account created successfully! Please login.");
+      success("Account Created", "Account created successfully! Please login.");
       router.push("/doctor/login");
     } catch (error) {
       console.error("Error saving doctor:", error);
       // Fallback to localStorage only
       const updatedDoctors = [...existingDoctors, newDoctor];
       localStorage.setItem("doctors", JSON.stringify(updatedDoctors));
-      alert("Account created successfully! (Saved locally) Please login.");
+      success("Account Created", "Account created successfully! (Saved locally) Please login.");
       router.push("/doctor/login");
     }
   };
@@ -475,39 +477,7 @@ export default function DoctorSignUpScreen() {
               )}
             </div>
 
-            {/* Profile Image Upload */}
-            <div>
-              <Label className="block mb-2 text-sm font-medium text-gray-700">
-                Profile Picture (Optional)
-              </Label>
-              <div className="flex items-center gap-4">
-                <label htmlFor="profileImage-desktop" className="cursor-pointer bg-gray-100 hover:bg-gray-200 rounded-full p-3 transition-colors">
-                  <Upload className="w-6 h-6 text-gray-500" />
-                </label>
-                <input
-                  type="file"
-                  id="profileImage-desktop"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-                {profileImage ? (
-                  <div className="flex items-center gap-2">
-                    <img src={profileImage} alt="Profile Preview" className="w-12 h-12 rounded-full object-cover border-2 border-[#46C2DE]" />
-                    <button
-                      type="button"
-                      onClick={removeImage}
-                      className="text-red-500 hover:text-red-700 p-1"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <span className="text-sm text-gray-500">Click to upload profile picture</span>
-                )}
-              </div>
-              <p className="text-xs text-gray-400 mt-1">Max size: 5MB. Supported formats: JPG, PNG, GIF</p>
-            </div>
+
 
             {/* Mobile Number */}
             <div>
@@ -691,31 +661,7 @@ export default function DoctorSignUpScreen() {
               )}
             </div>
 
-            {/* Profile Image Upload */}
-            <div className="flex items-center justify-center w-full mb-6">
-              <label htmlFor="profileImage-desktop" className="cursor-pointer bg-gray-100 hover:bg-gray-200 rounded-full p-3">
-                <Upload className="w-6 h-6 text-gray-500" />
-              </label>
-              <input
-                type="file"
-                id="profileImage-desktop"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-              {profileImage && (
-                <div className="ml-4 flex items-center">
-                  <img src={profileImage} alt="Profile Preview" className="w-10 h-10 rounded-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={removeImage}
-                    className="ml-2 text-red-500 hover:text-red-700"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-            </div>
+
 
             <Button
               type="submit"

@@ -6,6 +6,7 @@ import { ArrowLeft, Calendar } from "lucide-react";
 import BookingSuccessModal from "@/components/ScheduleSlot/BookingSuccessModal";
 import { API_ENDPOINTS } from "@/lib/config";
 import { Doctor } from "@/types/doctor";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function ScheduleSlot() {
   const router = useRouter();
@@ -77,6 +78,7 @@ export default function ScheduleSlot() {
   const [selectedSlot, setSelectedSlot] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [token, setToken] = useState("");
+  const { error: showError, warning } = useNotification();
 
   const morningSlots = [
     "09:30 AM – 09:45AM",
@@ -97,7 +99,7 @@ export default function ScheduleSlot() {
 
   const handleBooking = async () => {
     if (!selectedSlot) {
-      alert("Please select a slot before booking.");
+      showError("Slot Required", "Please select a slot before booking.");
       return;
     }
 
@@ -105,7 +107,7 @@ export default function ScheduleSlot() {
     const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
     
     if (!currentUser.fullName) {
-      alert("Please login to book an appointment.");
+      showError("Login Required", "Please login to book an appointment.");
       return;
     }
 
@@ -117,6 +119,7 @@ export default function ScheduleSlot() {
       id: `appt_${Date.now()}`,
       doctorId: doctor?.id || "dr1",
       doctorName: doctor?.name || "Doctor",
+      doctorImage: doctor?.image || "https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop",
       date: selectedDate,
       time: selectedSlot,
       patientName: currentUser.fullName,

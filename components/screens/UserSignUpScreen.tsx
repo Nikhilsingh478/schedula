@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { useNotification } from "@/context/NotificationContext";
 
 interface SignUpFormData {
   fullName: string;
@@ -21,6 +22,7 @@ export default function UserSignUpScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { setCurrentScreen } = useBooking();
+  const { error: showError, success } = useNotification();
   const {
     register,
     handleSubmit,
@@ -33,7 +35,7 @@ export default function UserSignUpScreen() {
   const onSubmit = (data: SignUpFormData) => {
     // Validate passwords match
     if (data.password !== data.confirmPassword) {
-      alert("Passwords do not match!");
+      showError("Password Mismatch", "Passwords do not match!");
       return;
     }
 
@@ -43,7 +45,7 @@ export default function UserSignUpScreen() {
     // Check if user already exists
     const userExists = existingUsers.find((user: any) => user.mobile === data.mobile);
     if (userExists) {
-      alert("User with this mobile number already exists!");
+      showError("User Exists", "User with this mobile number already exists!");
       return;
     }
 
@@ -63,7 +65,7 @@ export default function UserSignUpScreen() {
     localStorage.setItem("users", JSON.stringify(updatedUsers));
 
     // Show success message and redirect to login
-    alert("Account created successfully! Please login.");
+    success("Account Created", "Account created successfully! Please login.");
     setCurrentScreen("login");
   };
 

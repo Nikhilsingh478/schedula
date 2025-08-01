@@ -12,10 +12,12 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { ArrowLeft, Shield } from "lucide-react";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function OtpScreen() {
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const { setCurrentScreen, setUser } = useBooking();
+  const { error: showError, success } = useNotification();
 
   const handleOtpChange = (index: number, value: string) => {
     if (value.length <= 1 && /^[0-9]?$/.test(value)) {
@@ -35,18 +37,23 @@ export default function OtpScreen() {
 
   const handleVerify = () => {
     const otpCode = otp.join("");
-    if (otpCode.length === 6) {
-      const isDoctor = otpCode === "123456"; // Mock logic
-
-      setUser({
-        id: "user1",
-        phone: "+1234567890",
-        role: isDoctor ? "doctor" : "patient",
-        doctorId: isDoctor ? "dr1" : undefined,
-      });
-
-      setCurrentScreen(isDoctor ? "doctorProfile" : "doctorList");
+    if (otpCode.length !== 6) {
+      showError("Invalid OTP", "Please enter a complete 6-digit OTP code.");
+      return;
     }
+
+    const isDoctor = otpCode === "123456"; // Mock logic
+
+    setUser({
+      id: "user1",
+      fullName: "User",
+      mobile: "+1234567890",
+      role: isDoctor ? "doctor" : "patient",
+      doctorId: isDoctor ? "dr1" : undefined,
+    });
+
+    success("Verification Successful", "Your phone number has been verified successfully!");
+    setCurrentScreen(isDoctor ? "doctorProfile" : "doctorList");
   };
 
   const otpComplete = otp.every((digit) => digit !== "");

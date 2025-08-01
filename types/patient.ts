@@ -7,7 +7,11 @@ export interface Patient {
 
 export interface User {
   id: string;
-  phone: string;
-  role: "doctor" | "patient";
+  fullName: string;
+  mobile: string;
+  email?: string;
+  age?: string;
+  gender?: string;
+  role?: "doctor" | "patient";
   doctorId?: string;
 }

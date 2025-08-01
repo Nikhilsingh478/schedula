@@ -83,11 +83,23 @@ export default function DoctorProfileView({
               <p className="text-gray-500 text-xs">{doctorData.location}</p>
             </div>
             <div className="flex-shrink-0">
-              <img
-                src={doctorData.image}
-                alt={doctorData.name}
-                className="w-20 h-20 rounded-xl object-cover"
-              />
+              <div className="w-20 h-20">
+                {doctorData.image ? (
+                  <img
+                    src={doctorData.image}
+                    alt={doctorData.name}
+                    className="w-full h-full rounded-full object-cover border-2 border-[#46C2DE]/10 shadow-sm"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop";
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full rounded-full bg-gradient-to-br from-[#46C2DE] to-[#3bb0ca] flex items-center justify-center border-2 border-[#46C2DE]/10 shadow-sm">
+                    <span className="text-white text-xl font-bold">{doctorData.name?.charAt(0) || "D"}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

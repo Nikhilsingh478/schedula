@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Home, User, CalendarCheck, Users, LogOut, Upload, X } from "lucide-react";
 import { API_ENDPOINTS } from "@/lib/config";
+import { useNotification } from "@/context/NotificationContext";
+import { useModal } from "@/hooks/useModal";
+import Modal from "@/components/ui/Modal";
 
 type Appointment = {
   id: string;
@@ -37,7 +40,7 @@ type Doctor = {
 export default function DoctorMainScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "profile" | "schedule" | "patients"
+    "dashboard" | "profile" | "schedule" | "patients" | "calendar"
   >("dashboard");
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -45,6 +48,8 @@ export default function DoctorMainScreen() {
   const [editMode, setEditMode] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const { success, error: showError, warning } = useNotification();
+  const { modal, confirm, confirmDelete } = useModal();
 
   const {
     register,
@@ -67,17 +72,17 @@ export default function DoctorMainScreen() {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        alert("File size must be less than 5MB");
-        return;
-      }
+              // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+          showError("File Too Large", "File size must be less than 5MB. Please select a smaller image.");
+          return;
+        }
 
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        alert("Please select an image file");
-        return;
-      }
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          showError("Invalid File Type", "Please select a valid image file (JPG, PNG, GIF).");
+          return;
+        }
 
       // Read file as Data URL
       const reader = new FileReader();
@@ -97,61 +102,50 @@ export default function DoctorMainScreen() {
 
   // Clear all existing doctors (for fresh start)
   const clearAllDoctors = async () => {
-    const deletionType = window.confirm(
-      "Choose deletion scope:\n\n" +
-      "Click OK to delete ALL doctors (including original ones from server)\n" +
-      "Click Cancel to delete only user-created doctors (dr7 onwards)"
-    );
-
-    try {
-      // Clear doctors from localStorage
-      localStorage.removeItem("doctors");
-      
-      // Clear current doctor session
-      localStorage.removeItem("currentDoctor");
-      localStorage.removeItem("doctorPhone");
-      localStorage.removeItem("doctorVerified");
-      localStorage.removeItem("userRole");
-      
-      // Clear doctors from JSON server
-      try {
-        // Get all doctors from server
-        const response = await fetch(API_ENDPOINTS.doctors);
-        if (response.ok) {
-          const doctors = await response.json();
+    // Show a simple confirmation first
+    confirm(
+      "Clear Doctors",
+      "Are you sure you want to clear all doctors? This action cannot be undone.",
+      async () => {
+        try {
+          // Clear doctors from localStorage
+          localStorage.removeItem("doctors");
           
-          if (deletionType) {
-            // Delete ALL doctors (including original ones)
-            for (const doctor of doctors) {
-              if (doctor.id) {
-                await fetch(`${API_ENDPOINTS.doctors}/${doctor.id}`, {
-                  method: 'DELETE',
-                });
+          // Clear current doctor session
+          localStorage.removeItem("currentDoctor");
+          localStorage.removeItem("doctorPhone");
+          localStorage.removeItem("doctorVerified");
+          localStorage.removeItem("userRole");
+          
+          // Clear doctors from JSON server
+          try {
+            // Get all doctors from server
+            const response = await fetch(API_ENDPOINTS.doctors);
+            if (response.ok) {
+              const doctors = await response.json();
+              
+              // Delete ALL doctors (including original ones)
+              for (const doctor of doctors) {
+                if (doctor.id) {
+                  await fetch(`${API_ENDPOINTS.doctors}/${doctor.id}`, {
+                    method: 'DELETE',
+                  });
+                }
               }
+              success("Doctors Cleared", "ALL doctors have been deleted. The patient dashboard will be empty. You can now register new doctors.");
             }
-            alert("ALL doctors have been deleted from both local storage and server. The patient dashboard will be completely empty. You can now register new doctors.");
-          } else {
-            // Delete only user-created doctors (dr7 onwards)
-            for (const doctor of doctors) {
-              if (doctor.id && doctor.id.startsWith('dr') && parseInt(doctor.id.substring(2)) >= 7) {
-                await fetch(`${API_ENDPOINTS.doctors}/${doctor.id}`, {
-                  method: 'DELETE',
-                });
-              }
-            }
-            alert("User-created doctors have been deleted. Original doctors (dr1-dr6) remain in the patient dashboard. You can now register new doctors.");
+          } catch (serverError) {
+            console.log("Could not clear server doctors, but cleared locally");
+            warning("Partial Clear", "Doctors cleared from local storage only. Server deletion failed.");
           }
+          
+          router.replace("/");
+        } catch (err) {
+          console.error("Failed to clear doctors:", err);
+          showError("Clear Failed", "Failed to clear doctors. Please try again.");
         }
-      } catch (serverError) {
-        console.log("Could not clear server doctors, but cleared locally");
-        alert("Doctors cleared from local storage only. Server deletion failed.");
       }
-      
-      router.replace("/");
-    } catch (err) {
-      console.error("Failed to clear doctors:", err);
-      alert("Failed to clear doctors. Please try again.");
-    }
+    );
   };
 
   useEffect(() => {
@@ -196,110 +190,120 @@ export default function DoctorMainScreen() {
           (appt) => appt.doctorId === doctorData.id
         );
         
+
+        
         setAppointments(doctorAppointments);
       } catch (err) {
         console.error("Error loading data:", err);
-        // Fallback to mock data if API fails
-        const mockAppointments: Appointment[] = [
-          {
-            id: "a101",
-            doctorId: doctor?.id || "dr1",
-            doctorName: doctor?.name || "Doctor",
-            date: "2025-01-20",
-            time: "09:00 AM",
-            patientName: "John Doe",
-            patientPhone: "+1234567890",
-            status: "Confirmed",
-            token: "T001",
-            patientEmail: "john.doe@example.com",
-            patientAge: "30",
-            patientGender: "Male",
-            symptoms: "Headache, fatigue"
-          },
-          {
-            id: "a102",
-            doctorId: doctor?.id || "dr1",
-            doctorName: doctor?.name || "Doctor",
-            date: "2025-01-21",
-            time: "10:00 AM",
-            patientName: "Jane Smith",
-            patientPhone: "+1234567891",
-            status: "Pending",
-            token: "T002",
-            patientEmail: "jane.smith@example.com",
-            patientAge: "28",
-            patientGender: "Female",
-            symptoms: "Cough, sore throat"
-          },
-          {
-            id: "a103",
-            doctorId: doctor?.id || "dr1",
-            doctorName: doctor?.name || "Doctor",
-            date: "2025-01-22",
-            time: "02:00 PM",
-            patientName: "Mike Johnson",
-            patientPhone: "+1234567892",
-            status: "Confirmed",
-            token: "T003",
-            patientEmail: "mike.johnson@example.com",
-            patientAge: "45",
-            patientGender: "Male",
-            symptoms: "Chest pain, shortness of breath"
-          }
-        ];
-        setAppointments(mockAppointments);
+        // If API fails, only show appointments from localStorage
+        const localStorageAppointments = JSON.parse(localStorage.getItem("appointments") || "[]");
+        const doctorAppointments = localStorageAppointments.filter(
+          (appt: any) => appt.doctorId === doctor?.id
+        );
+
+        
+        setAppointments(doctorAppointments);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [router, reset]);
+  }, [router, reset, doctor?.id]);
 
   const handleLogout = () => {
-    const confirmLogout = window.confirm("Are you sure you want to log out?");
-    if (!confirmLogout) return;
-
-    // Clear all doctor-related data
-    localStorage.removeItem("currentDoctor");
-    localStorage.removeItem("doctorPhone");
-    localStorage.removeItem("doctorVerified");
-    localStorage.removeItem("userRole");
-    
-    router.replace("/");
+    confirm(
+      "Confirm Logout",
+      "Are you sure you want to log out? You will need to log in again to access your dashboard.",
+      () => {
+        // Clear all doctor-related data
+        localStorage.removeItem("currentDoctor");
+        localStorage.removeItem("doctorPhone");
+        localStorage.removeItem("doctorVerified");
+        localStorage.removeItem("userRole");
+        
+        router.replace("/");
+      }
+    );
   };
 
   const handleDeleteAccount = () => {
-    const confirmDelete = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
-    if (!confirmDelete) return;
+    confirmDelete(
+      "Delete Account",
+      "Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.",
+      () => {
+        try {
+          // Remove doctor from localStorage doctors array
+          const doctors = JSON.parse(localStorage.getItem("doctors") || "[]");
+          const updatedDoctors = doctors.filter((d: any) => d.id !== doctor?.id);
+          localStorage.setItem("doctors", JSON.stringify(updatedDoctors));
 
-    try {
-      // Remove doctor from localStorage doctors array
-      const doctors = JSON.parse(localStorage.getItem("doctors") || "[]");
-      const updatedDoctors = doctors.filter((d: any) => d.id !== doctor?.id);
-      localStorage.setItem("doctors", JSON.stringify(updatedDoctors));
-
-      // Clear all doctor-related data
-      localStorage.removeItem("currentDoctor");
-      localStorage.removeItem("doctorPhone");
-      localStorage.removeItem("doctorVerified");
-      localStorage.removeItem("userRole");
-      
-      alert("Account deleted successfully.");
-      router.replace("/");
-    } catch (err) {
-      console.error("Failed to delete account:", err);
-      alert("Failed to delete account. Please try again.");
-    }
+          // Clear all doctor-related data
+          localStorage.removeItem("currentDoctor");
+          localStorage.removeItem("doctorPhone");
+          localStorage.removeItem("doctorVerified");
+          localStorage.removeItem("userRole");
+          
+          success("Account Deleted", "Your account has been deleted successfully.");
+          router.replace("/");
+        } catch (err) {
+          console.error("Failed to delete account:", err);
+          showError("Deletion Failed", "Failed to delete account. Please try again.");
+        }
+      }
+    );
   };
 
   const today = new Date().toISOString().split("T")[0];
+  
+  // Helper function to parse appointment dates
+  const parseAppointmentDate = (dateString: string): Date => {
+    // Handle format like "14 TUE"
+    if (dateString.includes('TUE') || dateString.includes('MON') || dateString.includes('WED') || 
+        dateString.includes('THU') || dateString.includes('FRI') || dateString.includes('SAT') || 
+        dateString.includes('SUN')) {
+      const dayMatch = dateString.match(/(\d+)/);
+      if (dayMatch) {
+        const day = parseInt(dayMatch[1]);
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth();
+        const currentYear = currentDate.getFullYear();
+        
+        // Create date for this month and day
+        let appointmentDate = new Date(currentYear, currentMonth, day);
+        
+        // If the date has passed this month, assume it's for next month
+        if (appointmentDate < currentDate) {
+          appointmentDate = new Date(currentYear, currentMonth + 1, day);
+        }
+        
+        return appointmentDate;
+      }
+    }
+    
+    // Try to parse as regular date
+    return new Date(dateString);
+  };
+  
   const upcomingAppointments = appointments.filter(
-    (appt) => appt.date >= today && appt.patientName && appt.patientName.trim() !== ""
+    (appt) => {
+      // Check if appointment has valid patient name
+      const hasValidPatient = appt.patientName && appt.patientName.trim() !== "";
+      
+      // Check if appointment date is today or in the future
+      const appointmentDate = parseAppointmentDate(appt.date);
+      const isUpcoming = appointmentDate >= new Date(today);
+      
+
+      
+      return hasValidPatient && isUpcoming;
+    }
   );
   const uniquePatients = Array.from(
     new Set(appointments.map((appt) => appt.patientName).filter(name => name && name.trim() !== ""))
   );
+
+
 
   const handleProfileSave = async (data: Doctor) => {
     if (!doctor) return;
@@ -340,10 +344,10 @@ export default function DoctorMainScreen() {
       setProfileImage(null);
       setImageFile(null);
       
-      alert("Profile updated successfully!");
+      success("Profile Updated", "Profile updated successfully!");
     } catch (err) {
       console.error("Failed to update profile:", err);
-      alert("Failed to update profile. Please try again.");
+      showError("Update Failed", "Failed to update profile. Please try again.");
     }
   };
 
@@ -357,6 +361,9 @@ export default function DoctorMainScreen() {
 
   return (
     <div className="min-h-screen pb-20 bg-white font-poppins text-sm text-[#1A1A1A]">
+      {/* Modal */}
+      <Modal {...modal} />
+      
       {/* Header */}
       <div className="bg-[#46C2DE] text-white px-6 py-4 flex justify-between items-center shadow">
         <h1 className="text-base font-semibold">Hi, {doctor.name}</h1>
@@ -412,9 +419,9 @@ export default function DoctorMainScreen() {
                         <p className="text-gray-600"><span className="font-medium">Phone:</span> {appt.patientPhone}</p>
                       </div>
                       <div>
-                        <p className="text-gray-600"><span className="font-medium">Email:</span> {appt.patientEmail || "Not provided"}</p>
-                        <p className="text-gray-600"><span className="font-medium">Age:</span> {appt.patientAge || "Not specified"}</p>
-                        <p className="text-gray-600"><span className="font-medium">Gender:</span> {appt.patientGender || "Not specified"}</p>
+                        {appt.patientEmail && (
+                          <p className="text-gray-600"><span className="font-medium">Email:</span> {appt.patientEmail}</p>
+                        )}
                       </div>
                     </div>
                     
@@ -486,7 +493,23 @@ export default function DoctorMainScreen() {
                       </div>
                     ) : doctor?.image ? (
                       <div className="flex items-center gap-2">
-                        <img src={doctor.image} alt="Current Profile" className="w-16 h-16 rounded-full object-cover border-2 border-gray-300" />
+                        <div className="w-16 h-16 flex-shrink-0">
+                          {doctor.image ? (
+                            <img 
+                              src={doctor.image} 
+                              alt="Current Profile" 
+                              className="w-full h-full rounded-full object-cover border-2 border-gray-300 shadow-sm"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = "https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop";
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full rounded-full bg-gradient-to-br from-[#46C2DE] to-[#3bb0ca] flex items-center justify-center border-2 border-gray-300 shadow-sm">
+                              <span className="text-white text-lg font-bold">{doctor.name?.charAt(0) || "D"}</span>
+                            </div>
+                          )}
+                        </div>
                         <span className="text-sm text-gray-500">Current image</span>
                       </div>
                     ) : (
@@ -577,11 +600,23 @@ export default function DoctorMainScreen() {
               <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                 {/* Profile Image Display */}
                 <div className="flex items-center gap-4 mb-6">
-                  <img 
-                    src={doctor.image || "https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop"} 
-                    alt={doctor.name}
-                    className="w-20 h-20 rounded-full object-cover border-2 border-[#46C2DE]"
-                  />
+                  <div className="w-20 h-20 flex-shrink-0">
+                    {doctor.image ? (
+                      <img 
+                        src={doctor.image} 
+                        alt={doctor.name}
+                        className="w-full h-full rounded-full object-cover border-2 border-[#46C2DE] shadow-sm"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop";
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full rounded-full bg-gradient-to-br from-[#46C2DE] to-[#3bb0ca] flex items-center justify-center border-2 border-[#46C2DE] shadow-sm">
+                        <span className="text-white text-xl font-bold">{doctor.name?.charAt(0) || "D"}</span>
+                      </div>
+                    )}
+                  </div>
                   <div>
                     <h3 className="text-xl font-semibold text-gray-900">{doctor.name}</h3>
                     <p className="text-sm text-gray-500">{doctor.specialization}</p>
@@ -689,57 +724,47 @@ export default function DoctorMainScreen() {
                 <p className="text-gray-400 text-sm mt-2">Patients will appear here once they book appointments.</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {uniquePatients.map((patientName, idx) => {
-                  // Get all appointments for this patient
-                  const patientAppointments = appointments.filter(appt => appt.patientName === patientName);
-                  const latestAppointment = patientAppointments[0]; // Most recent appointment
-                  
-                  return (
-                    <div key={idx} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-[#46C2DE] rounded-full flex items-center justify-center text-white font-medium text-lg">
-                            {patientName.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-900">{patientName}</h3>
-                            <p className="text-sm text-gray-500">
-                              {patientAppointments.length} appointment{patientAppointments.length !== 1 ? 's' : ''}
-                            </p>
-                          </div>
-                        </div>
-                        <span className="text-sm text-gray-500">
-                          Last visit: {latestAppointment?.date || "N/A"}
-                        </span>
-                      </div>
-                      
-                      {latestAppointment && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p className="text-gray-600"><span className="font-medium">Phone:</span> {latestAppointment.patientPhone}</p>
-                            <p className="text-gray-600"><span className="font-medium">Email:</span> {latestAppointment.patientEmail || "Not provided"}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600"><span className="font-medium">Age:</span> {latestAppointment.patientAge || "Not specified"}</p>
-                            <p className="text-gray-600"><span className="font-medium">Gender:</span> {latestAppointment.patientGender || "Not specified"}</p>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {latestAppointment?.symptoms && (
-                        <div className="mt-3 pt-3 border-t border-gray-100">
-                          <p className="text-sm text-gray-600">
-                            <span className="font-medium">Recent Symptoms:</span> {latestAppointment.symptoms}
-                          </p>
-                        </div>
-                      )}
+              <div className="space-y-3">
+                {uniquePatients.map((patientName, idx) => (
+                  <div key={idx} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#46C2DE] rounded-full flex items-center justify-center text-white font-medium shadow-sm">
+                      {patientName.charAt(0).toUpperCase()}
                     </div>
-                  );
-                })}
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900">{patientName}</h3>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </>
+        )}
+
+        {activeTab === "calendar" && (
+          <div className="h-full">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold">Appointment Calendar</h2>
+              <button
+                onClick={() => router.push('/doctor/calendar')}
+                className="px-4 py-2 bg-[#46C2DE] text-white rounded-lg hover:bg-[#3bb0ca] transition-colors"
+              >
+                Open Full Calendar
+              </button>
+            </div>
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <div className="text-center py-12">
+                <CalendarCheck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg mb-4">Interactive Calendar View</p>
+                <p className="text-gray-400 text-sm mb-6">Click "Open Full Calendar" to access the complete calendar with drag-and-drop functionality.</p>
+                <div className="space-y-2 text-sm text-gray-500">
+                  <p>• Drag appointments to reschedule</p>
+                  <p>• Click appointments for details</p>
+                  <p>• Filter by status and date range</p>
+                  <p>• Cancel appointments directly</p>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
@@ -751,6 +776,7 @@ export default function DoctorMainScreen() {
             { key: "profile", icon: User, label: "Profile" },
             { key: "schedule", icon: CalendarCheck, label: "Schedule" },
             { key: "patients", icon: Users, label: "Patients" },
+            { key: "calendar", icon: CalendarCheck, label: "Calendar" },
           ].map(({ key, icon: Icon, label }) => (
             <button
               key={key}

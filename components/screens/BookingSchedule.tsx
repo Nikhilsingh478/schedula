@@ -9,6 +9,7 @@ import { ArrowLeft, Calendar, Clock, Sun, Moon } from "lucide-react";
 import { getNextDays, formatDate } from "@/lib/utils";
 import { DoctorSlots, TimeSlot } from "@/types/doctor";
 import { useRouter } from "next/navigation";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function BookingSchedule() {
   const { bookingData, setBookingData, setCurrentScreen } = useBooking();
@@ -18,6 +19,7 @@ export default function BookingSchedule() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { error: showError } = useNotification();
 
   useEffect(() => {
     setLoading(true);
@@ -79,13 +81,21 @@ export default function BookingSchedule() {
   }
 
   const handleBooking = () => {
-    if (selectedDate && selectedTime) {
-      setBookingData({
-        selectedDate,
-        selectedTime,
-      });
-      setCurrentScreen("confirmation");
+    if (!selectedDate) {
+      showError("Date Required", "Please select a date for your appointment.");
+      return;
     }
+    
+    if (!selectedTime) {
+      showError("Time Required", "Please select a time slot for your appointment.");
+      return;
+    }
+    
+    setBookingData({
+      selectedDate,
+      selectedTime,
+    });
+    setCurrentScreen("confirmation");
   };
 
   const getAvailableSlots = (date: string) => {

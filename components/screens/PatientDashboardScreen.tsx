@@ -17,11 +17,14 @@ import {
   MapPin,
   Clock,
   Users,
+  AlertCircle,
 } from "lucide-react";
 import AppointmentsScreen from "@/components/screens/AppointmentsScreen";
 import PatientRecords from "@/components/screens/PatientRecords";
 import UserProfileScreen from "@/components/screens/UserProfileScreen";
 import DoctorProfileView from "@/components/screens/DoctorProfileView";
+import { useModal } from "@/hooks/useModal";
+import Modal from "@/components/ui/Modal";
 
 // Type Definitions
 type Doctor = {
@@ -55,6 +58,8 @@ export default function PatientDashboardScreen() {
   const [authChecked, setAuthChecked] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { setCurrentScreen } = useBooking();
+  const { modal, confirm } = useModal();
 
   useEffect(() => {
     // Get current user from localStorage
@@ -65,7 +70,8 @@ export default function PatientDashboardScreen() {
     if (!userData || !userVerified || userRole !== "patient") {
       // Only redirect if we're sure the user is not authenticated
       if (authChecked) {
-        window.location.href = "/";
+        // Redirect to login screen instead of home page
+        setCurrentScreen("login");
       }
       return;
     }
@@ -77,7 +83,7 @@ export default function PatientDashboardScreen() {
     } catch (err) {
       console.error("Error parsing user data:", err);
       if (authChecked) {
-        window.location.href = "/";
+        setCurrentScreen("login");
       }
       return;
     }
@@ -136,7 +142,7 @@ export default function PatientDashboardScreen() {
     };
 
     fetchAllDoctors();
-  }, [authChecked]);
+  }, [authChecked, setCurrentScreen]);
 
   useEffect(() => {
     // Check if returning from booking
@@ -181,87 +187,141 @@ export default function PatientDashboardScreen() {
         setSelectedDoctor(doctor);
         setShowDoctorProfile(true);
       }}
-      className="flex gap-4 rounded-lg shadow-sm p-4 bg-white hover:shadow-md transition-shadow cursor-pointer border border-gray-100"
+      className="group relative bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-100 overflow-hidden hover:border-[#46C2DE]/20"
     >
-      <img
-        src={doctor.image}
-        alt={doctor.name}
-        className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover flex-shrink-0"
-      />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex-1">
-            <h3 className="font-semibold text-gray-900 text-base md:text-lg">
-              {doctor.name}
-            </h3>
-            <p className="text-gray-600 text-sm md:text-base">{doctor.specialization}</p>
-            {doctor.qualification && (
-              <p className="text-xs md:text-sm text-gray-500">{doctor.qualification}</p>
+      {/* Gradient overlay on hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#46C2DE]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
+      <div className="relative p-6">
+        <div className="flex gap-4">
+          {/* Doctor Image */}
+          <div className="relative w-20 h-20 md:w-24 md:h-24 flex-shrink-0">
+            {doctor.image ? (
+              <img
+                src={doctor.image}
+                alt={doctor.name}
+                className="w-full h-full rounded-full object-cover border-2 border-[#46C2DE]/10 shadow-lg group-hover:border-[#46C2DE]/30 transition-all duration-300"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop";
+                }}
+              />
+            ) : (
+              <div className="w-full h-full rounded-full bg-gradient-to-br from-[#46C2DE] to-[#3bb0ca] flex items-center justify-center border-2 border-[#46C2DE]/10 shadow-lg group-hover:border-[#46C2DE]/30 transition-all duration-300">
+                <span className="text-white text-xl md:text-2xl font-bold">{doctor.name?.charAt(0) || "D"}</span>
+              </div>
             )}
-            {doctor.location && (
-              <p className="text-xs md:text-sm text-gray-500">{doctor.location}</p>
-            )}
+            {/* Online status indicator */}
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white shadow-sm flex items-center justify-center">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+            </div>
           </div>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleFavorite(doctor.id);
-            }}
-            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <Heart
-              className={`w-5 h-5 md:w-6 md:h-6 ${
-                doctor.isFavorite
-                  ? "text-red-500 fill-current"
-                  : "text-gray-400"
-              }`}
-            />
-          </button>
-        </div>
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-4 text-sm text-gray-500">
-            {doctor.experience && (
-              <span className="flex items-center">
-                <span className="font-medium text-[#46C2DE]">{doctor.experience}+</span>
-                <span className="ml-1">years</span>
-              </span>
-            )}
-            {doctor.rating && (
-              <span className="flex items-center">
-                ⭐ <span className="font-medium text-[#46C2DE]">{doctor.rating}</span>
-              </span>
-            )}
-            {doctor.patients && (
-              <span className="flex items-center">
-                <span className="font-medium text-[#46C2DE]">{doctor.patients.toLocaleString()}</span>
-                <span className="ml-1">patients</span>
-              </span>
-            )}
+
+          {/* Doctor Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 text-lg md:text-xl mb-1">
+                  {doctor.name}
+                </h3>
+                <p className="text-[#46C2DE] font-semibold text-sm md:text-base mb-1">
+                  {doctor.specialization}
+                </p>
+                {doctor.qualification && (
+                  <p className="text-gray-600 text-xs md:text-sm font-medium mb-1">
+                    {doctor.qualification}
+                  </p>
+                )}
+                {doctor.location && (
+                  <div className="flex items-center text-gray-500 text-xs md:text-sm">
+                    <MapPin className="w-3 h-3 mr-1" />
+                    {doctor.location}
+                  </div>
+                )}
+              </div>
+              
+              {/* Favorite Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFavorite(doctor.id);
+                }}
+                className="p-2 hover:bg-red-50 rounded-full transition-all duration-300 group/fav"
+              >
+                <Heart
+                  className={`w-5 h-5 md:w-6 md:h-6 transition-all duration-300 ${
+                    doctor.isFavorite
+                      ? "text-red-500 fill-current scale-110"
+                      : "text-gray-400 group-hover/fav:text-red-400"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Stats Row */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-4 text-sm">
+                {doctor.experience && (
+                  <div className="flex items-center bg-blue-50 px-3 py-1 rounded-full">
+                    <span className="font-bold text-[#46C2DE]">{doctor.experience}+</span>
+                    <span className="ml-1 text-gray-600">years</span>
+                  </div>
+                )}
+                {doctor.rating && (
+                  <div className="flex items-center bg-yellow-50 px-3 py-1 rounded-full">
+                    <Star className="w-3 h-3 text-yellow-500 mr-1 fill-current" />
+                    <span className="font-bold text-yellow-600">{doctor.rating}</span>
+                  </div>
+                )}
+                {doctor.patients && (
+                  <div className="flex items-center bg-green-50 px-3 py-1 rounded-full">
+                    <Users className="w-3 h-3 text-green-500 mr-1" />
+                    <span className="font-bold text-green-600">{doctor.patients.toLocaleString()}</span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Availability Badge */}
+              <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">
+                {doctor.availability}
+              </div>
+            </div>
+
+            {/* Additional Info */}
+            <div className="flex items-center justify-between text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <span className="flex items-center">
+                  <Clock className="w-3 h-3 mr-1" />
+                  15 min slots
+                </span>
+                <span className="flex items-center">
+                  <Calendar className="w-3 h-3 mr-1" />
+                  In-person & Video
+                </span>
+              </div>
+              <div className="text-[#46C2DE] font-semibold">
+                Book Now →
+              </div>
+            </div>
           </div>
-          <div className="text-sm text-gray-500">
-            {doctor.availability}
-          </div>
-        </div>
-        {/* Additional Info */}
-        <div className="flex items-center justify-between text-xs text-gray-400">
-          <span>15 min slots</span>
-          <span>•</span>
-          <span>In-person & Video</span>
         </div>
       </div>
     </div>
   );
 
   const handleLogout = () => {
-    const confirmLogout = window.confirm("Are you sure you want to log out?");
-    if (!confirmLogout) return;
-
-    // Clear all user-related data
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("userVerified");
-    localStorage.removeItem("userRole");
-    
-    window.location.href = "/";
+    confirm(
+      "Confirm Logout",
+      "Are you sure you want to log out? You will need to log in again to access your dashboard.",
+      () => {
+        // Clear all user-related data
+        localStorage.removeItem("currentUser");
+        localStorage.removeItem("userVerified");
+        localStorage.removeItem("userRole");
+        
+        window.location.href = "/";
+      }
+    );
   };
 
   // Don't render anything until authentication is checked
@@ -343,21 +403,62 @@ export default function PatientDashboardScreen() {
             </div>
 
             {/* Doctor List */}
-            <div className="px-4 md:px-8 py-4">
+            <div className="px-4 md:px-8 py-6">
               <div className="max-w-7xl mx-auto">
-              {loading ? (
-                  <div className="text-center text-gray-500 py-8">Loading doctors...</div>
-              ) : error ? (
-                  <div className="text-center text-red-500 py-8">{error}</div>
-              ) : filteredDoctors.length === 0 ? (
-                  <div className="text-center text-gray-400 py-8">No doctors found.</div>
-              ) : (
+                {/* Results Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-lg md:text-xl font-semibold text-gray-900">
+                      Available Doctors
+                    </h2>
+                    <p className="text-gray-600 text-sm">
+                      {filteredDoctors.length} doctor{filteredDoctors.length !== 1 ? 's' : ''} found
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm text-gray-500">
+                    <span>Sort by:</span>
+                    <select className="border border-gray-200 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#46C2DE]/20">
+                      <option>Experience</option>
+                      <option>Rating</option>
+                      <option>Availability</option>
+                    </select>
+                  </div>
+                </div>
+
+                {loading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#46C2DE] mx-auto mb-4"></div>
+                      <p className="text-gray-600">Loading doctors...</p>
+                    </div>
+                  </div>
+                ) : error ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <AlertCircle className="w-8 h-8 text-red-500" />
+                      </div>
+                      <p className="text-red-600 font-medium mb-2">Error loading doctors</p>
+                      <p className="text-gray-500 text-sm">{error}</p>
+                    </div>
+                  </div>
+                ) : filteredDoctors.length === 0 ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Stethoscope className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <p className="text-gray-600 font-medium mb-2">No doctors found</p>
+                      <p className="text-gray-500 text-sm">Try adjusting your search criteria</p>
+                    </div>
+                  </div>
+                ) : (
                   <div className="space-y-4 md:space-y-6">
                     {filteredDoctors.map((doctor) => (
-                  <DoctorCard key={doctor.id} doctor={doctor} />
+                      <DoctorCard key={doctor.id} doctor={doctor} />
                     ))}
                   </div>
-              )}
+                )}
               </div>
             </div>
           </>
@@ -370,6 +471,9 @@ export default function PatientDashboardScreen() {
       className="min-h-screen bg-gray-50 flex flex-col"
       style={{ fontFamily: "Poppins, sans-serif" }}
     >
+      {/* Modal */}
+      <Modal {...modal} />
+      
       {/* Desktop Sidebar Navigation */}
       <div className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:bg-white lg:border-r lg:border-gray-200">
         <div className="flex-1 flex flex-col min-h-0">

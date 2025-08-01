@@ -73,7 +73,7 @@ function PatientAppContent() {
     case "appointments":
       return <PatientDashboardScreen />; // Show dashboard with appointments tab
     default:
-      return <UserLoginScreen />;
+      return <UserLoginScreen />; // Default to login for unauthenticated users
   }
 }
 
@@ -105,6 +105,9 @@ export default function Home() {
           if (returnFromBooking === "true") {
             setInitialScreen("appointments");
             localStorage.removeItem("returnFromBooking"); // Clear the flag
+          } else {
+            // Default to doctor list (patient dashboard)
+            setInitialScreen("doctorList");
           }
         }
       } else {
@@ -127,6 +130,7 @@ export default function Home() {
       } else {
         localStorage.setItem("userRole", "patient");
         setRole("patient");
+        setInitialScreen("login"); // Start with login for new patient selection
       }
     }
   };

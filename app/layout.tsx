@@ -2,6 +2,8 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import "@fontsource/poppins"; // This includes the default weight (400)
+import { NotificationProvider } from "@/context/NotificationContext";
+import NotificationContainer from "@/components/ui/NotificationContainer";
 
 export const metadata: Metadata = {
   title: "Shedula",
@@ -19,7 +21,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head />
-      <body className="bg-white text-[#1A1A1A] font-sans">{children}</body>
+      <body className="bg-white text-[#1A1A1A] font-sans">
+        <NotificationProvider>
+          {children}
+          <NotificationContainer />
+        </NotificationProvider>
+      </body>
     </html>
   );
 }

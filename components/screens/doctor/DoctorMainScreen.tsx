@@ -6,16 +6,23 @@ import { API_ENDPOINTS } from "@/lib/config";
 import { Home, User, CalendarCheck, Users, LogOut, Stethoscope } from "lucide-react";
 
 type Appointment = {
-  id: number;
-  doctorId: number;
+  id: string;
+  doctorId: string;
+  doctorName?: string;
   patientName: string;
+  patientPhone?: string;
   date: string;
   time: string;
-  status: "Confirmed" | "Cancelled" | "Pending";
+  status: string;
+  token?: string;
+  patientEmail?: string;
+  patientAge?: string;
+  patientGender?: string;
+  symptoms?: string;
 };
 
 type Doctor = {
-  id: number;
+  id: string;
   name: string;
   phone: string;
   specialization?: string;
@@ -63,9 +70,21 @@ export default function DoctorMainScreen() {
           `${API_ENDPOINTS.appointments}?doctorId=${loggedInDoctor.id}`,
         );
         const appointments: Appointment[] = await apptRes.json();
+
         setAppointments(appointments);
       } catch (err) {
         console.error("Error loading doctor dashboard:", err);
+        // Fallback to localStorage if API fails
+        try {
+          const localStorageAppointments = JSON.parse(localStorage.getItem("appointments") || "[]");
+          const doctorAppointments = localStorageAppointments.filter(
+            (appt: any) => appt.doctorId === doctor?.id
+          );
+
+          setAppointments(doctorAppointments);
+        } catch (localStorageErr) {
+          console.error("Error loading from localStorage:", localStorageErr);
+        }
       } finally {
         setLoading(false);
       }
@@ -81,11 +100,24 @@ export default function DoctorMainScreen() {
 
   const today = new Date().toISOString().split("T")[0];
   const upcomingAppointments = appointments.filter(
-    (appt) => appt.date >= today,
+    (appt) => {
+      // Check if appointment has valid patient name
+      const hasValidPatient = appt.patientName && appt.patientName.trim() !== "";
+      
+      // Check if appointment date is today or in the future
+      const appointmentDate = new Date(appt.date);
+      const isUpcoming = appointmentDate >= new Date(today);
+      
+
+      
+      return hasValidPatient && isUpcoming;
+    }
   );
   const uniquePatients = Array.from(
     new Set(appointments.map((appt) => appt.patientName)),
   );
+
+
 
   if (loading || !doctor) {
     return (
@@ -100,27 +132,44 @@ export default function DoctorMainScreen() {
 
   const AppointmentCard = ({ appt }: { appt: Appointment }) => (
     <div className="border rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow bg-white">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex-1">
-          <p className="text-lg md:text-xl font-medium text-[#1A1A1A] mb-1">
-                        {appt.patientName}
-                      </p>
-          <p className="text-sm md:text-base text-gray-500">
-                        {appt.date} at {appt.time}
-                      </p>
-                    </div>
-                    <span
-          className={`text-sm md:text-base px-3 py-1 md:py-2 rounded-full font-medium self-start md:self-auto ${
-                        appt.status === "Confirmed"
-                          ? "bg-green-100 text-green-600"
-                          : appt.status === "Cancelled"
-                            ? "bg-red-100 text-red-600"
-                            : "bg-yellow-100 text-yellow-600"
-                      }`}
-                    >
-                      {appt.status}
-                    </span>
-                  </div>
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">{appt.patientName}</h3>
+          <p className="text-sm text-gray-600">Token: <span className="font-bold text-[#46C2DE]">{appt.token || "N/A"}</span></p>
+        </div>
+        <span
+          className={`text-sm px-3 py-1 rounded-full font-medium ${
+            appt.status === "Confirmed"
+              ? "bg-green-100 text-green-600"
+              : appt.status === "Cancelled"
+                ? "bg-red-100 text-red-600"
+                : "bg-yellow-100 text-yellow-600"
+          }`}
+        >
+          {appt.status}
+        </span>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        <div>
+          <p className="text-gray-600"><span className="font-medium">Date:</span> {appt.date}</p>
+          <p className="text-gray-600"><span className="font-medium">Time:</span> {appt.time}</p>
+          <p className="text-gray-600"><span className="font-medium">Phone:</span> {appt.patientPhone || "N/A"}</p>
+        </div>
+        <div>
+          {appt.patientEmail && (
+            <p className="text-gray-600"><span className="font-medium">Email:</span> {appt.patientEmail}</p>
+          )}
+        </div>
+      </div>
+      
+      {appt.symptoms && (
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <p className="text-sm text-gray-600">
+            <span className="font-medium">Symptoms:</span> {appt.symptoms}
+          </p>
+        </div>
+      )}
     </div>
   );
 

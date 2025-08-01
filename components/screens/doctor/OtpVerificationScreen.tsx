@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Delete } from "lucide-react";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function OtpVerificationScreen() {
   const router = useRouter();
   const [otp, setOtp] = useState(["", "", "", ""]);
   const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
+  const { error: showError } = useNotification();
 
   useEffect(() => {
     document.body.classList.add("font-poppins");
@@ -75,7 +77,7 @@ export default function OtpVerificationScreen() {
     const enteredOtp = otp.join("");
 
     if (enteredOtp.length !== 4)
-      return alert("Please enter a valid 4-digit OTP.");
+      return showError("Invalid OTP", "Please enter a valid 4-digit OTP.");
 
     // Dummy OTP verification - any 4 digits work
     if (typeof window !== 'undefined') {

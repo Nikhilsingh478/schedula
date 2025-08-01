@@ -9,13 +9,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useNotification } from "@/context/NotificationContext";
+import { clearOldData, safeSetItem } from "@/lib/storage";
 
 const schema = z.object({
   mobile: z
     .string()
     .min(10, "Phone number must be 10 digits")
-    .max(10, "Phone number must be 10 digits")
-    .regex(/^[6-9]\d{9}$/, "Enter a valid Indian phone number"),
+    .max(10, "Phone number must be 10 digits"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -23,6 +24,9 @@ type FormData = z.infer<typeof schema>;
 
 export default function DoctorLoginScreen() {
   const router = useRouter();
+  const { error: showError } = useNotification();
+
+
 
   const {
     register,
@@ -53,20 +57,41 @@ export default function DoctorLoginScreen() {
     const doctor = doctors.find((d: any) => d.phone === data.mobile);
     
     if (!doctor) {
-      alert("Doctor not found! Please sign up first.");
+      showError("Doctor Not Found", "Doctor not found! Please sign up first.");
       return;
     }
     
     // Check password
     if (doctor.password !== data.password) {
-      alert("Invalid password!");
+      showError("Invalid Password", "Invalid password!");
       return;
     }
     
-    // Store logged in doctor info
-    localStorage.setItem("currentDoctor", JSON.stringify(doctor));
-    localStorage.setItem("doctorPhone", data.mobile);
-    localStorage.setItem("userRole", "doctor");
+    // Clear old data first to prevent quota issues
+    clearOldData();
+    
+    // Store only essential doctor info to avoid quota issues
+    const essentialDoctorData = {
+      id: doctor.id,
+      name: doctor.name,
+      phone: doctor.phone,
+      email: doctor.email,
+      specialization: doctor.specialization,
+      qualification: doctor.qualification,
+      experience: doctor.experience,
+      image: doctor.image
+    };
+    
+    // Use safe storage functions
+    const success1 = safeSetItem("currentDoctor", JSON.stringify(essentialDoctorData));
+    const success2 = safeSetItem("doctorPhone", data.mobile);
+    const success3 = safeSetItem("userRole", "doctor");
+    const success4 = safeSetItem("doctorVerified", "false");
+    
+    if (!success1 || !success2 || !success3 || !success4) {
+      showError("Storage Error", "Failed to save login data. Please try again.");
+      return;
+    }
     
     // Proceed to OTP verification
     router.push("/doctor/verify-otp");
@@ -144,8 +169,8 @@ export default function DoctorLoginScreen() {
 
         {/* Footer */}
         <div className="text-center mt-8">
-          <p className="text-gray-600">
-            Don't have an account?{" "}
+                      <p className="text-gray-600">
+              Don&apos;t have an account?{" "}
             <button 
               onClick={handleSignUp}
               className="text-[#46c2de] font-semibold hover:text-[#3bb5d1] transition-colors"
@@ -225,8 +250,8 @@ export default function DoctorLoginScreen() {
 
           {/* Footer */}
           <div className="text-center mt-8">
-            <p className="text-gray-600">
-              Don't have an account?{" "}
+                      <p className="text-gray-600">
+            Don&apos;t have an account?{" "}
               <button 
                 onClick={handleSignUp}
                 className="text-[#46c2de] font-semibold hover:text-[#3bb5d1] transition-colors"

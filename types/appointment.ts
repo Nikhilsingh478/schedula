@@ -6,10 +6,15 @@ export interface Appointment {
   doctorName: string;
   date: string;
   time: string;
-  token: string;
-  patientName?: string;
-  patientPhone?: string;
-  status: "confirmed" | "pending" | "cancelled";
+  token?: string;
+  patientName: string;
+  patientPhone: string;
+  status: string;
+  patientEmail?: string;
+  patientAge?: string;
+  patientGender?: string;
+  symptoms?: string;
+  createdAt?: string;
 }
 
 export interface BookingData {

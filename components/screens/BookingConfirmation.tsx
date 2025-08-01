@@ -14,10 +14,12 @@ import {
   Share,
 } from "lucide-react";
 import { formatDateFull, generateToken } from "@/lib/utils";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function BookingConfirmation() {
   const { bookingData, resetBooking, setCurrentScreen } = useBooking();
   const { doctor, selectedDate, selectedTime } = bookingData;
+  const { info } = useNotification();
 
   if (!doctor || !selectedDate || !selectedTime) {
     return <div>Booking information not found</div>;
@@ -32,7 +34,7 @@ export default function BookingConfirmation() {
 
   const handleShare = () => {
     // In a real app, this would open a share dialog
-    alert("Sharing appointment details...");
+    info("Sharing", "Sharing appointment details...");
   };
 
   return (

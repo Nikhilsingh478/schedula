@@ -126,14 +126,23 @@ export default function HomeDoctorList() {
                   <div className="flex flex-col space-y-4">
                     {/* Doctor Image and Basic Info */}
                     <div className="flex items-start space-x-4">
-                <img
-                  src={
-                    doctor.image ||
-                    "https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop"
-                  }
-                  alt={doctor.name}
-                        className="w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover flex-shrink-0 bg-gray-100"
-                />
+                      <div className="w-16 h-16 md:w-20 md:h-20 flex-shrink-0">
+                        {doctor.image ? (
+                          <img
+                            src={doctor.image}
+                            alt={doctor.name}
+                            className="w-full h-full rounded-full object-cover border-2 border-[#46C2DE]/10 shadow-sm"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = "https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop";
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full rounded-full bg-gradient-to-br from-[#46C2DE] to-[#3bb0ca] flex items-center justify-center border-2 border-[#46C2DE]/10 shadow-sm">
+                            <span className="text-white text-lg md:text-xl font-bold">{doctor.name?.charAt(0) || "D"}</span>
+                          </div>
+                        )}
+                      </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">
