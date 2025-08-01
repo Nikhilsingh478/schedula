@@ -755,7 +755,7 @@ export default function DoctorMainScreen() {
               <div className="text-center py-12">
                 <CalendarCheck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 text-lg mb-4">Interactive Calendar View</p>
-                <p className="text-gray-400 text-sm mb-6">Click "Open Full Calendar" to access the complete calendar with drag-and-drop functionality.</p>
+                <p className="text-gray-400 text-sm mb-6">Click Open Full Calendar to access the complete calendar with drag-and-drop functionality.</p>
                 <div className="space-y-2 text-sm text-gray-500">
                   <p>• Drag appointments to reschedule</p>
                   <p>• Click appointments for details</p>
