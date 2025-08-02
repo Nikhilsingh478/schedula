@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { useNotification } from "@/context/NotificationContext";
+import { API_ENDPOINTS } from "@/lib/config";
 
 interface SignUpFormData {
   fullName: string;
@@ -32,41 +33,63 @@ export default function UserSignUpScreen() {
 
   const password = watch("password");
 
-  const onSubmit = (data: SignUpFormData) => {
-    // Validate passwords match
-    if (data.password !== data.confirmPassword) {
-      showError("Password Mismatch", "Passwords do not match!");
-      return;
+  const onSubmit = async (data: SignUpFormData) => {
+    try {
+      // Validate passwords match
+      if (data.password !== data.confirmPassword) {
+        showError("Password Mismatch", "Passwords do not match!");
+        return;
+      }
+
+      // Get existing users from localStorage
+      const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
+      
+      // Check if user already exists
+      const userExists = existingUsers.find((user: any) => user.mobile === data.mobile);
+      if (userExists) {
+        showError("User Exists", "User with this mobile number already exists!");
+        return;
+      }
+
+      // Create new user
+      const newUser = {
+        id: `user_${Date.now()}`,
+        fullName: data.fullName,
+        mobile: data.mobile,
+        email: data.email,
+        password: data.password, // In real app, this should be hashed
+        role: "patient",
+        createdAt: new Date().toISOString(),
+      };
+
+      // Try to save to JSON server first (if available)
+      try {
+        const response = await fetch(API_ENDPOINTS.patients, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newUser),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to save to server');
+        }
+      } catch (error) {
+        console.log("Server not available, saving locally only");
+      }
+
+      // Always save to localStorage as primary storage
+      const updatedUsers = [...existingUsers, newUser];
+      localStorage.setItem("users", JSON.stringify(updatedUsers));
+
+      // Show success message and redirect to login
+      success("Account Created", "Account created successfully! Please login.");
+      setCurrentScreen("login");
+    } catch (error) {
+      console.error("Error during signup:", error);
+      showError("Signup Error", "Failed to create account. Please try again.");
     }
-
-    // Get existing users from localStorage
-    const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
-    
-    // Check if user already exists
-    const userExists = existingUsers.find((user: any) => user.mobile === data.mobile);
-    if (userExists) {
-      showError("User Exists", "User with this mobile number already exists!");
-      return;
-    }
-
-    // Create new user
-    const newUser = {
-      id: `user_${Date.now()}`,
-      fullName: data.fullName,
-      mobile: data.mobile,
-      email: data.email,
-      password: data.password, // In real app, this should be hashed
-      role: "patient",
-      createdAt: new Date().toISOString(),
-    };
-
-    // Save user to localStorage
-    const updatedUsers = [...existingUsers, newUser];
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-
-    // Show success message and redirect to login
-    success("Account Created", "Account created successfully! Please login.");
-    setCurrentScreen("login");
   };
 
   const handleBackToLogin = () => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useNotification } from '@/context/NotificationContext';
-import Toast from './toast';
+import Toast from './Toast';
 
 const NotificationContainer = () => {
   const { toasts, removeToast } = useNotification();

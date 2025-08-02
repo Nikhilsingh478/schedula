@@ -166,12 +166,15 @@ export default function DoctorMainScreen() {
         reset(doctorData);
 
         // Fetch appointments from JSON server and localStorage
-        const appointmentsResponse = await fetch(API_ENDPOINTS.appointments);
         let allAppointments: Appointment[] = [];
-        
-        if (appointmentsResponse.ok) {
-          const jsonServerAppointments = await appointmentsResponse.json();
-          allAppointments = [...jsonServerAppointments];
+        try {
+          const appointmentsResponse = await fetch(API_ENDPOINTS.appointments);
+          if (appointmentsResponse.ok) {
+            const jsonServerAppointments = await appointmentsResponse.json();
+            allAppointments = [...jsonServerAppointments];
+          }
+        } catch (serverError) {
+          console.log("JSON server not available, using localStorage only");
         }
 
         // Get appointments from localStorage (newly booked appointments)

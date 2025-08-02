@@ -68,67 +68,71 @@ export default function DoctorSignUpScreen() {
   };
 
   const onSubmit = async (data: DoctorSignUpFormData) => {
-    // Validate passwords match
-    if (data.password !== data.confirmPassword) {
-      showError("Password Mismatch", "Passwords do not match!");
-      return;
-    }
-
-    // Get existing doctors from localStorage
-    const existingDoctors = JSON.parse(localStorage.getItem("doctors") || "[]");
-    
-    // Check if doctor already exists
-    const doctorExists = existingDoctors.find((doctor: any) => doctor.phone === data.mobile);
-    if (doctorExists) {
-      showError("Account Exists", "Doctor with this mobile number already exists!");
-      return;
-    }
-
-    // Create new doctor in JSON server format
-    const newDoctor = {
-      id: `dr${existingDoctors.length + 7}`, // Start from dr7 since dr1-dr6 exist in JSON server
-      name: data.fullName,
-      phone: data.mobile,
-      specialization: data.specialization,
-      qualification: data.qualification,
-      location: "Mumbai, India", // Default location
-      patients: 0, // New doctor starts with 0 patients
-      experience: parseInt(data.experience) || 0,
-      rating: 4.5, // Default rating for new doctors
-      about: `Dr. ${data.fullName} is a ${data.specialization} with ${data.experience} years of experience. ${data.qualification} qualified professional dedicated to providing excellent patient care.`,
-      services: `${data.specialization}, Consultation, Assessment`,
-      slots: [
-        "09:00 AM",
-        "10:00 AM", 
-        "11:00 AM",
-        "02:00 PM",
-        "03:00 PM",
-        "04:00 PM"
-      ],
-      image: profileImage || "https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop", // Use uploaded image or default
-      workingHours: "Mon-Fri: 9:00 AM - 6:00 PM",
-      availability: "Available Today",
-      bio: `Experienced ${data.specialization} with ${data.experience} years of practice. Committed to providing personalized care and treatment plans for all patients.`,
-      password: data.password, // In real app, this should be hashed
-      role: "doctor",
-      createdAt: new Date().toISOString(),
-    };
-
     try {
-      // Save to JSON server first
-      const response = await fetch(API_ENDPOINTS.doctors, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newDoctor),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save to server');
+      // Validate passwords match
+      if (data.password !== data.confirmPassword) {
+        showError("Password Mismatch", "Passwords do not match!");
+        return;
       }
 
-      // Also save to localStorage as backup
+      // Get existing doctors from localStorage
+      const existingDoctors = JSON.parse(localStorage.getItem("doctors") || "[]");
+      
+      // Check if doctor already exists
+      const doctorExists = existingDoctors.find((doctor: any) => doctor.phone === data.mobile);
+      if (doctorExists) {
+        showError("Account Exists", "Doctor with this mobile number already exists!");
+        return;
+      }
+
+      // Create new doctor in JSON server format
+      const newDoctor = {
+        id: `dr${existingDoctors.length + 7}`, // Start from dr7 since dr1-dr6 exist in JSON server
+        name: data.fullName,
+        phone: data.mobile,
+        specialization: data.specialization,
+        qualification: data.qualification,
+        location: "Mumbai, India", // Default location
+        patients: 0, // New doctor starts with 0 patients
+        experience: parseInt(data.experience) || 0,
+        rating: 4.5, // Default rating for new doctors
+        about: `Dr. ${data.fullName} is a ${data.specialization} with ${data.experience} years of experience. ${data.qualification} qualified professional dedicated to providing excellent patient care.`,
+        services: `${data.specialization}, Consultation, Assessment`,
+        slots: [
+          "09:00 AM",
+          "10:00 AM", 
+          "11:00 AM",
+          "02:00 PM",
+          "03:00 PM",
+          "04:00 PM"
+        ],
+        image: profileImage || "https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop", // Use uploaded image or default
+        workingHours: "Mon-Fri: 9:00 AM - 6:00 PM",
+        availability: "Available Today",
+        bio: `Experienced ${data.specialization} with ${data.experience} years of practice. Committed to providing personalized care and treatment plans for all patients.`,
+        password: data.password, // In real app, this should be hashed
+        role: "doctor",
+        createdAt: new Date().toISOString(),
+      };
+
+      // Try to save to JSON server first (if available)
+      try {
+        const response = await fetch(API_ENDPOINTS.doctors, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newDoctor),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to save to server');
+        }
+      } catch (error) {
+        console.log("Server not available, saving locally only");
+      }
+
+      // Always save to localStorage as primary storage
       const updatedDoctors = [...existingDoctors, newDoctor];
       localStorage.setItem("doctors", JSON.stringify(updatedDoctors));
 
@@ -136,12 +140,8 @@ export default function DoctorSignUpScreen() {
       success("Account Created", "Account created successfully! Please login.");
       router.push("/doctor/login");
     } catch (error) {
-      console.error("Error saving doctor:", error);
-      // Fallback to localStorage only
-      const updatedDoctors = [...existingDoctors, newDoctor];
-      localStorage.setItem("doctors", JSON.stringify(updatedDoctors));
-      success("Account Created", "Account created successfully! (Saved locally) Please login.");
-      router.push("/doctor/login");
+      console.error("Error during doctor signup:", error);
+      showError("Signup Error", "Failed to create account. Please try again.");
     }
   };
 

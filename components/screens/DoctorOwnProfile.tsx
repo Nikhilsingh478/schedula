@@ -26,19 +26,43 @@ export default function DoctorOwnProfile() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(API_ENDPOINTS.doctors)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch doctors");
-        return res.json();
-      })
-      .then((data) => {
-        setDoctors(data);
+    const fetchDoctors = async () => {
+      try {
+        // Try to fetch from JSON server first
+        let jsonServerDoctors = [];
+        try {
+          const response = await fetch(API_ENDPOINTS.doctors);
+          if (response.ok) {
+            jsonServerDoctors = await response.json();
+          }
+        } catch (serverError) {
+          console.log("JSON server not available, using localStorage only");
+        }
+
+        // Get doctors from localStorage (newly registered doctors)
+        const localStorageDoctors = JSON.parse(localStorage.getItem("doctors") || "[]");
+        
+        // Combine and deduplicate doctors
+        const allDoctors = [...jsonServerDoctors];
+        
+        // Add localStorage doctors that aren't in JSON server
+        localStorageDoctors.forEach((localDoctor: any) => {
+          const exists = allDoctors.find((d: any) => d.id === localDoctor.id);
+          if (!exists) {
+            allDoctors.push(localDoctor);
+          }
+        });
+
+        setDoctors(allDoctors);
+      } catch (err) {
+        console.error("Error loading doctors:", err);
+        setError("Failed to load doctors");
+      } finally {
         setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
+      }
+    };
+
+    fetchDoctors();
   }, []);
 
   // Find doctor data based on user's doctorId

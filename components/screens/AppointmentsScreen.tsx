@@ -48,12 +48,15 @@ export default function AppointmentsScreen({ showNotificationIcon = false }: { s
         });
 
         // Fetch from JSON server
-        const jsonServerResponse = await fetch(API_ENDPOINTS.appointments);
         let allAppointments: any[] = [];
-        
-        if (jsonServerResponse.ok) {
-          const jsonServerAppointments = await jsonServerResponse.json();
-          allAppointments = [...jsonServerAppointments];
+        try {
+          const jsonServerResponse = await fetch(API_ENDPOINTS.appointments);
+          if (jsonServerResponse.ok) {
+            const jsonServerAppointments = await jsonServerResponse.json();
+            allAppointments = [...jsonServerAppointments];
+          }
+        } catch (serverError) {
+          console.log("JSON server not available, using localStorage only");
         }
 
         // Get appointments from localStorage

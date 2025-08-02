@@ -31,45 +31,50 @@ export default function UserLoginScreen() {
     },
   });
 
-  const onSubmit = (data: LoginFormData) => {
-    // Get users from localStorage
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    
-    // Find user by mobile number
-    const user = users.find((u: any) => u.mobile === data.mobile);
-    
-    if (!user) {
-      showError("User Not Found", "User not found! Please sign up first.");
-      return;
-    }
-    
-    // Check password
-    if (user.password !== data.password) {
-      showError("Invalid Password", "Invalid password!");
-      return;
-    }
-    
-    // Store only essential user info to avoid quota issues
+  const onSubmit = async (data: LoginFormData) => {
     try {
-      const essentialUserData = {
-        id: user.id,
-        fullName: user.fullName,
-        mobile: user.mobile,
-        email: user.email,
-        role: user.role
-      };
+      // Get users from localStorage
+      const users = JSON.parse(localStorage.getItem("users") || "[]");
       
-      localStorage.setItem("currentUser", JSON.stringify(essentialUserData));
-      localStorage.setItem("userRole", "patient");
-      localStorage.setItem("userVerified", "false");
+      // Find user by mobile number
+      const user = users.find((u: any) => u.mobile === data.mobile);
+      
+      if (!user) {
+        showError("User Not Found", "User not found! Please sign up first.");
+        return;
+      }
+      
+      // Check password
+      if (user.password !== data.password) {
+        showError("Invalid Password", "Invalid password!");
+        return;
+      }
+      
+      // Store only essential user info to avoid quota issues
+      try {
+        const essentialUserData = {
+          id: user.id,
+          fullName: user.fullName,
+          mobile: user.mobile,
+          email: user.email,
+          role: user.role
+        };
+        
+        localStorage.setItem("currentUser", JSON.stringify(essentialUserData));
+        localStorage.setItem("userRole", "patient");
+        localStorage.setItem("userVerified", "false");
+      } catch (error) {
+        console.error("Failed to store user data:", error);
+        showError("Storage Error", "Failed to save login data. Please try again.");
+        return;
+      }
+      
+      // Proceed to OTP verification
+      setCurrentScreen("otp");
     } catch (error) {
-      console.error("Failed to store user data:", error);
-      showError("Storage Error", "Failed to save login data. Please try again.");
-      return;
+      console.error("Error during login:", error);
+      showError("Login Error", "Failed to login. Please try again.");
     }
-    
-    // Proceed to OTP verification
-    setCurrentScreen("otp");
   };
 
   const handleSignUp = () => {

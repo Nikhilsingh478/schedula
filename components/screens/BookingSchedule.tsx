@@ -23,19 +23,38 @@ export default function BookingSchedule() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(API_ENDPOINTS.slots)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch slots");
-        return res.json();
-      })
-      .then((data) => {
-        setSlotsData(data);
+    const fetchSlots = async () => {
+      try {
+        // Try to fetch from JSON server first
+        try {
+          const response = await fetch(API_ENDPOINTS.slots);
+          if (response.ok) {
+            const data = await response.json();
+            setSlotsData(data);
+            setLoading(false);
+            return;
+          }
+        } catch (serverError) {
+          console.log("JSON server not available, using default slots");
+        }
+
+        // Fallback to default slots if server is not available
+        setSlotsData({
+          dr1: {
+            "2024-01-15": ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM"],
+            "2024-01-16": ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM"],
+            "2024-01-17": ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM"],
+          }
+        });
+      } catch (err) {
+        console.error("Error loading slots:", err);
+        setError("Failed to load slots");
+      } finally {
         setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
+      }
+    };
+
+    fetchSlots();
   }, []);
 
   const doctor = bookingData?.doctor;

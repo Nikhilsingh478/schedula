@@ -49,52 +49,57 @@ export default function DoctorLoginScreen() {
     }
   }, [router]);
 
-  const onSubmit = (data: FormData) => {
-    // Get doctors from localStorage
-    const doctors = JSON.parse(localStorage.getItem("doctors") || "[]");
-    
-    // Find doctor by phone number
-    const doctor = doctors.find((d: any) => d.phone === data.mobile);
-    
-    if (!doctor) {
-      showError("Doctor Not Found", "Doctor not found! Please sign up first.");
-      return;
+  const onSubmit = async (data: FormData) => {
+    try {
+      // Get doctors from localStorage
+      const doctors = JSON.parse(localStorage.getItem("doctors") || "[]");
+      
+      // Find doctor by phone number
+      const doctor = doctors.find((d: any) => d.phone === data.mobile);
+      
+      if (!doctor) {
+        showError("Doctor Not Found", "Doctor not found! Please sign up first.");
+        return;
+      }
+      
+      // Check password
+      if (doctor.password !== data.password) {
+        showError("Invalid Password", "Invalid password!");
+        return;
+      }
+      
+      // Clear old data first to prevent quota issues
+      clearOldData();
+      
+      // Store only essential doctor info to avoid quota issues
+      const essentialDoctorData = {
+        id: doctor.id,
+        name: doctor.name,
+        phone: doctor.phone,
+        email: doctor.email,
+        specialization: doctor.specialization,
+        qualification: doctor.qualification,
+        experience: doctor.experience,
+        image: doctor.image
+      };
+      
+      // Use safe storage functions
+      const success1 = safeSetItem("currentDoctor", JSON.stringify(essentialDoctorData));
+      const success2 = safeSetItem("doctorPhone", data.mobile);
+      const success3 = safeSetItem("userRole", "doctor");
+      const success4 = safeSetItem("doctorVerified", "false");
+      
+      if (!success1 || !success2 || !success3 || !success4) {
+        showError("Storage Error", "Failed to save login data. Please try again.");
+        return;
+      }
+      
+      // Proceed to OTP verification
+      router.push("/doctor/verify-otp");
+    } catch (error) {
+      console.error("Error during doctor login:", error);
+      showError("Login Error", "Failed to login. Please try again.");
     }
-    
-    // Check password
-    if (doctor.password !== data.password) {
-      showError("Invalid Password", "Invalid password!");
-      return;
-    }
-    
-    // Clear old data first to prevent quota issues
-    clearOldData();
-    
-    // Store only essential doctor info to avoid quota issues
-    const essentialDoctorData = {
-      id: doctor.id,
-      name: doctor.name,
-      phone: doctor.phone,
-      email: doctor.email,
-      specialization: doctor.specialization,
-      qualification: doctor.qualification,
-      experience: doctor.experience,
-      image: doctor.image
-    };
-    
-    // Use safe storage functions
-    const success1 = safeSetItem("currentDoctor", JSON.stringify(essentialDoctorData));
-    const success2 = safeSetItem("doctorPhone", data.mobile);
-    const success3 = safeSetItem("userRole", "doctor");
-    const success4 = safeSetItem("doctorVerified", "false");
-    
-    if (!success1 || !success2 || !success3 || !success4) {
-      showError("Storage Error", "Failed to save login data. Please try again.");
-      return;
-    }
-    
-    // Proceed to OTP verification
-    router.push("/doctor/verify-otp");
   };
 
   const handleSignUp = () => {

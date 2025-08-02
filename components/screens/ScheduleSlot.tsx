@@ -42,12 +42,21 @@ export default function ScheduleSlot() {
       }
 
       try {
-        const response = await fetch(API_ENDPOINTS.doctors);
-        if (!response.ok) {
-          throw new Error("Failed to fetch doctor data");
+        // Try to fetch from JSON server first
+        let doctors = [];
+        try {
+          const response = await fetch(API_ENDPOINTS.doctors);
+          if (response.ok) {
+            doctors = await response.json();
+          }
+        } catch (serverError) {
+          console.log("JSON server not available, using localStorage only");
         }
+
+        // Get doctors from localStorage (newly registered doctors)
+        const localStorageDoctors = JSON.parse(localStorage.getItem("doctors") || "[]");
+        doctors = [...doctors, ...localStorageDoctors];
         
-        const doctors = await response.json();
         const foundDoctor = doctors.find((d: any) => d.id === doctorId);
         
         if (foundDoctor) {

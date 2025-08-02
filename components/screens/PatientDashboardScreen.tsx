@@ -92,12 +92,15 @@ export default function PatientDashboardScreen() {
     setLoading(true);
     const fetchAllDoctors = async () => {
       try {
-        // Fetch from JSON server
-        const jsonServerResponse = await fetch(API_ENDPOINTS.doctors);
+        // Try to fetch from JSON server first
         let jsonServerDoctors = [];
-        
-        if (jsonServerResponse.ok) {
-          jsonServerDoctors = await jsonServerResponse.json();
+        try {
+          const jsonServerResponse = await fetch(API_ENDPOINTS.doctors);
+          if (jsonServerResponse.ok) {
+            jsonServerDoctors = await jsonServerResponse.json();
+          }
+        } catch (serverError) {
+          console.log("JSON server not available, using localStorage only");
         }
 
         // Get doctors from localStorage (newly registered doctors)
