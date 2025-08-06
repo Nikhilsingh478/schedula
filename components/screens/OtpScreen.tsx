@@ -36,16 +36,34 @@ export default function OtpScreen() {
   const handleVerify = () => {
     const otpCode = otp.join("");
     if (otpCode.length === 6) {
-      const isDoctor = otpCode === "123456"; // Mock logic
-
-      setUser({
-        id: "user1",
-        phone: "+1234567890",
-        role: isDoctor ? "doctor" : "patient",
-        doctorId: isDoctor ? "dr1" : undefined,
-      });
-
-      setCurrentScreen(isDoctor ? "doctorProfile" : "doctorList");
+      // Get the current user from localStorage
+      const currentUser = localStorage.getItem("currentUser");
+      const userRole = localStorage.getItem("userRole");
+      
+      if (currentUser && userRole === "patient") {
+        try {
+          const user = JSON.parse(currentUser);
+          
+          // Set user verification flag
+          localStorage.setItem("userVerified", "true");
+          
+          // Navigate to doctor list for patients
+          setCurrentScreen("doctorList");
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+          setCurrentScreen("login");
+        }
+      } else {
+        // Fallback for doctor or missing user data
+        const isDoctor = otpCode === "123456"; // Mock logic
+        setUser({
+          id: "user1",
+          phone: "+1234567890",
+          role: isDoctor ? "doctor" : "patient",
+          doctorId: isDoctor ? "dr1" : undefined,
+        });
+        setCurrentScreen(isDoctor ? "doctorProfile" : "doctorList");
+      }
     }
   };
 

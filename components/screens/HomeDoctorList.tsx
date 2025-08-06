@@ -19,19 +19,37 @@ export default function HomeDoctorList() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(API_ENDPOINTS.doctors)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch doctors");
-        return res.json();
-      })
-      .then((data) => {
-        setDoctors(data);
+    const fetchAllDoctors = async () => {
+      try {
+        // Fetch from JSON server
+        const jsonServerResponse = await fetch(API_ENDPOINTS.doctors);
+        let allDoctors: Doctor[] = [];
+        
+        if (jsonServerResponse.ok) {
+          allDoctors = await jsonServerResponse.json();
+        }
+
+        // Get doctors from localStorage (manually created doctors)
+        const localStorageDoctors = JSON.parse(localStorage.getItem("doctors") || "[]");
+        
+        // Add localStorage doctors that aren't in JSON server
+        localStorageDoctors.forEach((localDoctor: any) => {
+          const exists = allDoctors.find((d: any) => d.id === localDoctor.id);
+          if (!exists) {
+            allDoctors.push(localDoctor);
+          }
+        });
+
+        setDoctors(allDoctors);
         setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+        setError(errorMessage);
         setLoading(false);
-      });
+      }
+    };
+
+    fetchAllDoctors();
   }, []);
 
   const handleDoctorSelect = (doctor: Doctor) => {

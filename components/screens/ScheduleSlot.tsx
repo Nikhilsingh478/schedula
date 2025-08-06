@@ -6,6 +6,8 @@ import { ArrowLeft, Calendar } from "lucide-react";
 import BookingSuccessModal from "@/components/ScheduleSlot/BookingSuccessModal";
 import { API_ENDPOINTS } from "@/lib/config";
 import { Doctor } from "@/types/doctor";
+import { storageUtils } from "@/lib/storage";
+import { convertDisplayDateToISO } from "@/lib/utils";
 
 export default function ScheduleSlot() {
   const router = useRouter();
@@ -41,6 +43,32 @@ export default function ScheduleSlot() {
       }
 
       try {
+        // First, check localStorage for manually created doctors
+        const localStorageDoctors = JSON.parse(localStorage.getItem("doctors") || "[]");
+        const localDoctor = localStorageDoctors.find((d: any) => d.id === doctorId);
+        
+        if (localDoctor) {
+          // Found the doctor in localStorage (manually created)
+          setDoctor({
+            id: localDoctor.id,
+            name: localDoctor.name,
+            specialization: localDoctor.specialization,
+            qualification: localDoctor.qualification,
+            location: localDoctor.location,
+            experience: localDoctor.experience,
+            rating: localDoctor.rating,
+            about: localDoctor.about,
+            services: localDoctor.services,
+            image: localDoctor.image,
+            slots: localDoctor.slots || [],
+            patients: localDoctor.patients,
+            fee: localDoctor.fee,
+          });
+          setLoading(false);
+          return;
+        }
+
+        // If not found in localStorage, fetch from API
         const response = await fetch(API_ENDPOINTS.doctors);
         if (!response.ok) {
           throw new Error("Failed to fetch doctor data");
@@ -55,8 +83,15 @@ export default function ScheduleSlot() {
             name: foundDoctor.name,
             specialization: foundDoctor.specialization,
             qualification: foundDoctor.qualification,
+            location: foundDoctor.location,
+            experience: foundDoctor.experience,
+            rating: foundDoctor.rating,
+            about: foundDoctor.about,
+            services: foundDoctor.services,
             image: foundDoctor.image,
             slots: foundDoctor.slots || [],
+            patients: foundDoctor.patients,
+            fee: foundDoctor.fee,
           });
         } else {
           setDoctor(defaultDoctor);
@@ -102,9 +137,9 @@ export default function ScheduleSlot() {
     }
 
     // Get current user from localStorage
-    const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
-    
-    if (!currentUser.fullName) {
+        const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+
+    if (!currentUser.name && !currentUser.fullName) {
       alert("Please login to book an appointment.");
       return;
     }
@@ -112,14 +147,15 @@ export default function ScheduleSlot() {
     // Generate token
     const generatedToken = "A" + Math.floor(Math.random() * 1000 + 1).toString().padStart(3, '0');
 
-    // Create new appointment with enhanced patient data
+    // Create new appointment with enhanced patient data and doctor image
     const newAppointment = {
       id: `appt_${Date.now()}`,
       doctorId: doctor?.id || "dr1",
       doctorName: doctor?.name || "Doctor",
-      date: selectedDate,
+      doctorImage: doctor?.image || "https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop",
+      date: convertDisplayDateToISO(selectedDate), // Convert to ISO format
       time: selectedSlot,
-      patientName: currentUser.fullName,
+              patientName: currentUser.name || currentUser.fullName,
       patientPhone: currentUser.mobile || "+1234567890",
       patientEmail: currentUser.email || "",
       patientAge: currentUser.age || "Not specified",
@@ -144,19 +180,27 @@ export default function ScheduleSlot() {
         throw new Error('Failed to save to server');
       }
 
-      // Also save to localStorage as backup
-      const existingAppointments = JSON.parse(localStorage.getItem("appointments") || "[]");
+      // Also save to localStorage as backup using storage utility
+      const existingAppointments = JSON.parse(storageUtils.getItem("appointments") || "[]");
       const updatedAppointments = [...existingAppointments, newAppointment];
-      localStorage.setItem("appointments", JSON.stringify(updatedAppointments));
+      storageUtils.storeAppointments(updatedAppointments);
+      
+      // Debug logging
+      console.log("New appointment created:", newAppointment);
+      console.log("Updated appointments in localStorage:", updatedAppointments);
 
       setToken(generatedToken);
       setShowModal(true);
     } catch (error) {
       console.error("Error saving appointment:", error);
-      // Fallback to localStorage only
-      const existingAppointments = JSON.parse(localStorage.getItem("appointments") || "[]");
+      // Fallback to localStorage only using storage utility
+      const existingAppointments = JSON.parse(storageUtils.getItem("appointments") || "[]");
       const updatedAppointments = [...existingAppointments, newAppointment];
-      localStorage.setItem("appointments", JSON.stringify(updatedAppointments));
+      storageUtils.storeAppointments(updatedAppointments);
+      
+      // Debug logging
+      console.log("New appointment created (fallback):", newAppointment);
+      console.log("Updated appointments in localStorage (fallback):", updatedAppointments);
       
       setToken(generatedToken);
       setShowModal(true);

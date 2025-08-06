@@ -3,14 +3,30 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { API_ENDPOINTS } from "@/lib/config";
-import { Home, User, CalendarCheck, Users, LogOut, Stethoscope } from "lucide-react";
+import { 
+  Home, 
+  User, 
+  CalendarCheck, 
+  Users, 
+  LogOut, 
+  Stethoscope, 
+  Phone, 
+  Clock, 
+  Calendar,
+  Hash,
+  UserCircle,
+  MapPin
+} from "lucide-react";
+import DoctorCalendar from "@/components/screens/DoctorCalendar";
 
 type Appointment = {
   id: number;
   doctorId: number;
   patientName: string;
+  patientPhone?: string;
   date: string;
   time: string;
+  token?: string;
   status: "Confirmed" | "Cancelled" | "Pending";
 };
 
@@ -26,7 +42,7 @@ type Doctor = {
 export default function DoctorMainScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "profile" | "schedule" | "patients"
+    "dashboard" | "profile" | "schedule" | "patients" | "calendar"
   >("dashboard");
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -39,7 +55,7 @@ export default function DoctorMainScreen() {
         : null;
 
     if (!phone) {
-      router.replace("/doctor/login");
+      router.replace("/doctor");
       return;
     }
 
@@ -53,7 +69,7 @@ export default function DoctorMainScreen() {
         const loggedInDoctor = doctorList[0];
         if (!loggedInDoctor) {
           localStorage.removeItem("doctorPhone");
-          router.replace("/doctor/login");
+          router.replace("/doctor");
           return;
         }
 
@@ -76,7 +92,7 @@ export default function DoctorMainScreen() {
 
   const handleLogout = () => {
     localStorage.removeItem("doctorPhone");
-    router.replace("/doctor/login");
+    router.replace("/doctor");
   };
 
   const today = new Date().toISOString().split("T")[0];
@@ -86,6 +102,22 @@ export default function DoctorMainScreen() {
   const uniquePatients = Array.from(
     new Set(appointments.map((appt) => appt.patientName)),
   );
+
+  // Format date for display
+  const formatDisplayDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  // Format time for display
+  const formatDisplayTime = (timeString: string) => {
+    return timeString; // Assuming time is already in readable format
+  };
 
   if (loading || !doctor) {
     return (
@@ -99,28 +131,80 @@ export default function DoctorMainScreen() {
   }
 
   const AppointmentCard = ({ appt }: { appt: Appointment }) => (
-    <div className="border rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow bg-white">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex-1">
-          <p className="text-lg md:text-xl font-medium text-[#1A1A1A] mb-1">
-                        {appt.patientName}
-                      </p>
-          <p className="text-sm md:text-base text-gray-500">
-                        {appt.date} at {appt.time}
-                      </p>
-                    </div>
-                    <span
-          className={`text-sm md:text-base px-3 py-1 md:py-2 rounded-full font-medium self-start md:self-auto ${
-                        appt.status === "Confirmed"
-                          ? "bg-green-100 text-green-600"
-                          : appt.status === "Cancelled"
-                            ? "bg-red-100 text-red-600"
-                            : "bg-yellow-100 text-yellow-600"
-                      }`}
-                    >
-                      {appt.status}
-                    </span>
-                  </div>
+    <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100">
+      {/* Header with patient info and status */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-[#46C2DE] to-[#3bb0ca] rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-sm">
+            {appt.patientName.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">{appt.patientName}</h3>
+            <p className="text-sm text-gray-500 flex items-center">
+              <UserCircle className="w-4 h-4 mr-1" />
+              Patient
+            </p>
+          </div>
+        </div>
+        <span
+          className={`px-3 py-1 rounded-full text-sm font-medium ${
+            appt.status === "Confirmed"
+              ? "bg-green-100 text-green-700 border border-green-200"
+              : appt.status === "Cancelled"
+                ? "bg-red-100 text-red-700 border border-red-200"
+                : "bg-yellow-100 text-yellow-700 border border-yellow-200"
+          }`}
+        >
+          {appt.status}
+        </span>
+      </div>
+
+      {/* Appointment details */}
+      <div className="space-y-3">
+        {/* Date and Time */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center space-x-2 text-gray-600">
+            <Calendar className="w-4 h-4 text-[#46C2DE]" />
+            <span className="text-sm font-medium">{formatDisplayDate(appt.date)}</span>
+          </div>
+          <div className="flex items-center space-x-2 text-gray-600">
+            <Clock className="w-4 h-4 text-[#46C2DE]" />
+            <span className="text-sm font-medium">{formatDisplayTime(appt.time)}</span>
+          </div>
+        </div>
+
+        {/* Phone Number */}
+        {appt.patientPhone && (
+          <div className="flex items-center space-x-2 text-gray-600">
+            <Phone className="w-4 h-4 text-[#46C2DE]" />
+            <span className="text-sm font-medium">{appt.patientPhone}</span>
+          </div>
+        )}
+
+        {/* Appointment Token */}
+        {appt.token && (
+          <div className="flex items-center space-x-2 text-gray-600">
+            <Hash className="w-4 h-4 text-[#46C2DE]" />
+            <span className="text-sm font-medium">Token: {appt.token}</span>
+          </div>
+        )}
+
+        {/* Appointment ID */}
+        <div className="flex items-center space-x-2 text-gray-500">
+          <Hash className="w-4 h-4 text-gray-400" />
+          <span className="text-xs">ID: {appt.id}</span>
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      <div className="mt-4 pt-4 border-t border-gray-100 flex space-x-2">
+        <button className="flex-1 bg-[#46C2DE] text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-[#3bb0ca] transition-colors">
+          View Details
+        </button>
+        <button className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
+          Contact
+        </button>
+      </div>
     </div>
   );
 
@@ -130,21 +214,27 @@ export default function DoctorMainScreen() {
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl md:text-2xl font-semibold text-gray-900">
-                Upcoming Appointments
-              </h2>
-              <div className="text-sm text-gray-500">
-                {upcomingAppointments.length} appointments
+              <div>
+                <h2 className="text-xl md:text-2xl font-semibold text-gray-900">
+                  Upcoming Appointments
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Manage your patient appointments and schedules
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-[#46C2DE]">{upcomingAppointments.length}</div>
+                <div className="text-sm text-gray-500">appointments</div>
               </div>
             </div>
             {upcomingAppointments.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="text-center py-12 bg-white rounded-xl border border-gray-100">
                 <CalendarCheck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">No upcoming appointments.</p>
+                <p className="text-gray-500 text-lg font-medium">No upcoming appointments</p>
                 <p className="text-gray-400 text-sm mt-2">Your schedule is clear for now.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {upcomingAppointments.map((appt) => (
                   <AppointmentCard key={appt.id} appt={appt} />
                 ))}
@@ -192,19 +282,25 @@ export default function DoctorMainScreen() {
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl md:text-2xl font-semibold text-gray-900">All Appointments</h2>
-              <div className="text-sm text-gray-500">
-                {appointments.length} total appointments
+              <div>
+                <h2 className="text-xl md:text-2xl font-semibold text-gray-900">All Appointments</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Complete history of all patient appointments
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-[#46C2DE]">{appointments.length}</div>
+                <div className="text-sm text-gray-500">total appointments</div>
               </div>
             </div>
             {appointments.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="text-center py-12 bg-white rounded-xl border border-gray-100">
                 <CalendarCheck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">No appointments available.</p>
+                <p className="text-gray-500 text-lg font-medium">No appointments available</p>
                 <p className="text-gray-400 text-sm mt-2">Start accepting appointments to see them here.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {appointments.map((appt) => (
                   <AppointmentCard key={appt.id} appt={appt} />
                 ))}
@@ -217,26 +313,35 @@ export default function DoctorMainScreen() {
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl md:text-2xl font-semibold text-gray-900">Patient List</h2>
-              <div className="text-sm text-gray-500">
-                {uniquePatients.length} unique patients
+              <div>
+                <h2 className="text-xl md:text-2xl font-semibold text-gray-900">Patient List</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  All patients who have booked appointments with you
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-[#46C2DE]">{uniquePatients.length}</div>
+                <div className="text-sm text-gray-500">unique patients</div>
               </div>
             </div>
             {uniquePatients.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="text-center py-12 bg-white rounded-xl border border-gray-100">
                 <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">No patients found.</p>
+                <p className="text-gray-500 text-lg font-medium">No patients found</p>
                 <p className="text-gray-400 text-sm mt-2">Patients will appear here once they book appointments.</p>
               </div>
             ) : (
               <div className="bg-white rounded-xl p-6 md:p-8 shadow-sm border border-gray-100">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {uniquePatients.map((pname, idx) => (
-                    <div key={idx} className="flex items-center p-3 rounded-lg bg-gray-50">
-                      <div className="w-8 h-8 bg-[#46C2DE] rounded-full flex items-center justify-center text-white font-medium text-sm mr-3">
+                    <div key={idx} className="flex items-center p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200">
+                      <div className="w-10 h-10 bg-gradient-to-br from-[#46C2DE] to-[#3bb0ca] rounded-full flex items-center justify-center text-white font-semibold text-sm mr-3 shadow-sm">
                         {pname.charAt(0).toUpperCase()}
                       </div>
-                      <span className="text-gray-900 font-medium">{pname}</span>
+                      <div>
+                        <span className="text-gray-900 font-medium">{pname}</span>
+                        <p className="text-xs text-gray-500">Patient</p>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -245,10 +350,12 @@ export default function DoctorMainScreen() {
           </div>
         );
 
-      default:
-        return null;
-    }
-  };
+              case "calendar":
+          return <DoctorCalendar />;
+        default:
+          return null;
+      }
+    };
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -285,6 +392,7 @@ export default function DoctorMainScreen() {
               { key: "profile", icon: User, label: "Profile" },
               { key: "schedule", icon: CalendarCheck, label: "Schedule" },
               { key: "patients", icon: Users, label: "Patients" },
+              { key: "calendar", icon: Calendar, label: "Calendar" },
             ].map(({ key, icon: Icon, label }) => (
               <button
                 key={key}
@@ -343,6 +451,7 @@ export default function DoctorMainScreen() {
             { key: "profile", icon: User, label: "Profile" },
             { key: "schedule", icon: CalendarCheck, label: "Schedule" },
             { key: "patients", icon: Users, label: "Patients" },
+            { key: "calendar", icon: Calendar, label: "Calendar" },
           ].map(({ key, icon: Icon, label }) => (
             <button
               key={key}

@@ -43,10 +43,37 @@ export default function AppointmentsScreen({ showNotificationIcon = false }: { s
 
         // Filter appointments for current user
         const userAppointments = allAppointments.filter(
-          (appt) => appt.patientName === currentUser.fullName
+          (appt) => appt.patientName === (currentUser.name || currentUser.fullName)
         );
 
-        setAppointments(userAppointments);
+        // Fetch doctors data to get images for appointments that don't have doctorImage
+        try {
+          const doctorsResponse = await fetch(API_ENDPOINTS.doctors);
+          if (doctorsResponse.ok) {
+            const doctors = await doctorsResponse.json();
+            
+            // Enhance appointments with doctor images
+            const enhancedAppointments = userAppointments.map(appt => {
+              if (!appt.doctorImage) {
+                const doctor = doctors.find((d: any) => d.id === appt.doctorId);
+                if (doctor) {
+                  return {
+                    ...appt,
+                    doctorImage: doctor.image || "https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop"
+                  };
+                }
+              }
+              return appt;
+            });
+            
+            setAppointments(enhancedAppointments);
+          } else {
+            setAppointments(userAppointments);
+          }
+        } catch (doctorsError) {
+          console.log("Could not fetch doctors, using appointments as is");
+          setAppointments(userAppointments);
+        }
       } catch (err) {
         console.error("Error loading appointments:", err);
         setError("Failed to load appointments");
@@ -56,7 +83,7 @@ export default function AppointmentsScreen({ showNotificationIcon = false }: { s
     };
 
     fetchAllAppointments();
-  }, [currentUser.fullName]);
+  }, [currentUser.name, currentUser.fullName]);
 
   const handleCancelAppointment = async (appointmentId: string) => {
     const confirmCancel = window.confirm("Are you sure you want to cancel this appointment?");

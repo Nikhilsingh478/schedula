@@ -15,9 +15,11 @@ import {
   Award,
   GraduationCap,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function DoctorProfilePublic() {
   const { bookingData, setCurrentScreen } = useBooking();
+  const router = useRouter();
   const doctor = bookingData.doctor;
 
   if (!doctor) {
@@ -25,7 +27,8 @@ export default function DoctorProfilePublic() {
   }
 
   const handleBookAppointment = () => {
-    setCurrentScreen("booking");
+    // Navigate to schedule-slot page with doctor ID
+    router.push(`/schedule-slot?id=${doctor.id}`);
   };
 
   return (

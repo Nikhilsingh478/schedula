@@ -16,25 +16,7 @@ export default function RoleSelectionScreen() {
 
   useEffect(() => {
     document.body.classList.add("font-poppins");
-
-    if (typeof window !== "undefined") {
-      const doctorPhone = localStorage.getItem("doctorPhone");
-      const tempDoctorPhone = localStorage.getItem("tempDoctorPhone");
-      const patientPhone = localStorage.getItem("patientPhone");
-      const role = localStorage.getItem("userRole");
-
-      // 🔁 Role-based redirection logic
-      if (role === "doctor") {
-        if (doctorPhone) {
-          router.replace("/doctor/main");
-        } else if (tempDoctorPhone && !doctorPhone) {
-          router.replace("/doctor/verify-otp");
-        }
-      } else if (role === "patient" && patientPhone) {
-        router.replace("/patient/main");
-      }
-    }
-  }, [router]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">

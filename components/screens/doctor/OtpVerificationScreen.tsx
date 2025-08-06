@@ -21,7 +21,7 @@ export default function OtpVerificationScreen() {
       const userRole = localStorage.getItem("userRole");
 
       if (currentDoctor && doctorVerified && userRole === "doctor") {
-        router.replace("/doctor/main");
+        router.replace("/doctor");
       }
     }
   }, [router]);

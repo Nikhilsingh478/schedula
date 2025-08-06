@@ -65,7 +65,8 @@ export default function PatientDashboardScreen() {
     if (!userData || !userVerified || userRole !== "patient") {
       // Only redirect if we're sure the user is not authenticated
       if (authChecked) {
-        window.location.href = "/";
+              window.location.href = "/";
+        return;
       }
       return;
     }
@@ -316,7 +317,7 @@ export default function PatientDashboardScreen() {
               <div className="flex items-start justify-between mb-6">
                 <div>
                     <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
-                    Hello, {currentUser?.fullName || "User"}
+                    Hello, {currentUser?.name || currentUser?.fullName || "User"}
                   </h1>
                     <p className="text-gray-600 text-sm md:text-base">Dombivli, Mumbai</p>
                 </div>
@@ -408,11 +409,11 @@ export default function PatientDashboardScreen() {
           <div className="p-4 border-t border-gray-200">
             <div className="flex items-center mb-4">
               <div className="w-10 h-10 bg-[#46c2de] rounded-full flex items-center justify-center text-white font-semibold mr-3">
-                {currentUser?.fullName?.charAt(0)?.toUpperCase() || "U"}
+                {(currentUser?.name || currentUser?.fullName)?.charAt(0)?.toUpperCase() || "U"}
               </div>
               <div>
                 <p className="font-medium text-gray-900 text-sm">
-                  {currentUser?.fullName || "User"}
+                  {currentUser?.name || currentUser?.fullName || "User"}
                 </p>
                 <p className="text-gray-500 text-xs">Patient</p>
               </div>

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Home, User, CalendarCheck, Users, LogOut, Upload, X } from "lucide-react";
 import { API_ENDPOINTS } from "@/lib/config";
+import { storageUtils } from "@/lib/storage";
+import { convertDisplayDateToISO } from "@/lib/utils";
 
 type Appointment = {
   id: string;
@@ -95,62 +97,80 @@ export default function DoctorMainScreen() {
     setImageFile(null);
   };
 
-  // Clear all existing doctors (for fresh start)
-  const clearAllDoctors = async () => {
-    const deletionType = window.confirm(
-      "Choose deletion scope:\n\n" +
-      "Click OK to delete ALL doctors (including original ones from server)\n" +
-      "Click Cancel to delete only user-created doctors (dr7 onwards)"
+  // Clear manually created doctors only (dr7 onwards)
+  const clearManuallyCreatedDoctors = async () => {
+    const confirmDelete = window.confirm(
+      "This will delete ONLY the doctors that were created manually (dr7 onwards).\n\n" +
+      "Original doctors (dr1-dr6) will remain in the patient dashboard.\n\n" +
+      "Are you sure you want to continue?"
     );
 
+    if (!confirmDelete) {
+      return;
+    }
+
     try {
-      // Clear doctors from localStorage
-      localStorage.removeItem("doctors");
+      console.log("=== CLEARING MANUALLY CREATED DOCTORS ===");
       
-      // Clear current doctor session
-      localStorage.removeItem("currentDoctor");
-      localStorage.removeItem("doctorPhone");
-      localStorage.removeItem("doctorVerified");
-      localStorage.removeItem("userRole");
+      // Get doctors from localStorage
+      const localStorageDoctors = JSON.parse(localStorage.getItem("doctors") || "[]");
+      console.log("Doctors in localStorage:", localStorageDoctors.length);
       
-      // Clear doctors from JSON server
+      // Filter out manually created doctors (dr7 onwards)
+      const originalDoctors = localStorageDoctors.filter((doctor: any) => {
+        if (doctor.id && doctor.id.startsWith('dr')) {
+          const doctorNumber = parseInt(doctor.id.substring(2));
+          return doctorNumber < 7; // Keep dr1-dr6
+        }
+        return true; // Keep non-dr doctors
+      });
+      
+      console.log("Keeping original doctors:", originalDoctors.length);
+      console.log("Removing manually created doctors:", localStorageDoctors.length - originalDoctors.length);
+      
+      // Update localStorage with only original doctors
+      localStorage.setItem("doctors", JSON.stringify(originalDoctors));
+      
+      // Clear doctors from JSON server (only manually created ones)
       try {
-        // Get all doctors from server
         const response = await fetch(API_ENDPOINTS.doctors);
         if (response.ok) {
-          const doctors = await response.json();
+          const serverDoctors = await response.json();
+          console.log("Doctors on server:", serverDoctors.length);
           
-          if (deletionType) {
-            // Delete ALL doctors (including original ones)
-            for (const doctor of doctors) {
-              if (doctor.id) {
+          let deletedCount = 0;
+          for (const doctor of serverDoctors) {
+            if (doctor.id && doctor.id.startsWith('dr')) {
+              const doctorNumber = parseInt(doctor.id.substring(2));
+              if (doctorNumber >= 7) {
+                // Delete manually created doctor from server
+                try {
                 await fetch(`${API_ENDPOINTS.doctors}/${doctor.id}`, {
                   method: 'DELETE',
                 });
+                  deletedCount++;
+                  console.log(`Deleted doctor ${doctor.id} from server`);
+                } catch (deleteError) {
+                  console.error(`Failed to delete doctor ${doctor.id}:`, deleteError);
+                }
               }
             }
-            alert("ALL doctors have been deleted from both local storage and server. The patient dashboard will be completely empty. You can now register new doctors.");
-          } else {
-            // Delete only user-created doctors (dr7 onwards)
-            for (const doctor of doctors) {
-              if (doctor.id && doctor.id.startsWith('dr') && parseInt(doctor.id.substring(2)) >= 7) {
-                await fetch(`${API_ENDPOINTS.doctors}/${doctor.id}`, {
-                  method: 'DELETE',
-                });
-              }
-            }
-            alert("User-created doctors have been deleted. Original doctors (dr1-dr6) remain in the patient dashboard. You can now register new doctors.");
           }
+          
+          console.log(`Deleted ${deletedCount} manually created doctors from server`);
+          alert(`Successfully deleted ${deletedCount} manually created doctors.\n\nOriginal doctors (dr1-dr6) remain in the patient dashboard.`);
         }
       } catch (serverError) {
-        console.log("Could not clear server doctors, but cleared locally");
-        alert("Doctors cleared from local storage only. Server deletion failed.");
+        console.error("Server error:", serverError);
+        alert("Manually created doctors cleared from local storage. Server deletion failed.");
       }
       
-      router.replace("/");
+      // Refresh the page to update the UI
+      window.location.reload();
+      
     } catch (err) {
-      console.error("Failed to clear doctors:", err);
-      alert("Failed to clear doctors. Please try again.");
+      console.error("Failed to clear manually created doctors:", err);
+      alert("Failed to clear manually created doctors. Please try again.");
     }
   };
 
@@ -161,7 +181,7 @@ export default function DoctorMainScreen() {
     const userRole = localStorage.getItem("userRole");
 
     if (!currentDoctor || !doctorVerified || userRole !== "doctor") {
-      router.replace("/doctor/login");
+      router.replace("/doctor");
       return;
     }
 
@@ -183,18 +203,37 @@ export default function DoctorMainScreen() {
         // Get appointments from localStorage (newly booked appointments)
         const localStorageAppointments = JSON.parse(localStorage.getItem("appointments") || "[]");
         
+        // Also try to get from storage utility as backup
+        const storageUtilityAppointments = JSON.parse(storageUtils.getItem("appointments") || "[]");
+        
+        // Use the longer array to ensure we don't miss any appointments
+        const allLocalAppointments = localStorageAppointments.length > storageUtilityAppointments.length 
+          ? localStorageAppointments 
+          : storageUtilityAppointments;
+        
         // Add localStorage appointments that aren't in JSON server
-        localStorageAppointments.forEach((localAppt: any) => {
+        allLocalAppointments.forEach((localAppt: any) => {
           const exists = allAppointments.find((a: any) => a.id === localAppt.id);
           if (!exists) {
             allAppointments.push(localAppt);
           }
         });
         
+        // Debug logging
+        console.log("All appointments from API and localStorage:", allAppointments);
+        console.log("Current doctor ID:", doctorData.id);
+        console.log("LocalStorage appointments:", allLocalAppointments);
+        
         // Filter appointments for this specific doctor
         const doctorAppointments = allAppointments.filter(
-          (appt) => appt.doctorId === doctorData.id
+          (appt) => {
+            const matches = String(appt.doctorId) === String(doctorData.id);
+            console.log(`Appointment ${appt.id}: doctorId=${appt.doctorId}, doctorData.id=${doctorData.id}, matches=${matches}`);
+            return matches;
+          }
         );
+        
+        console.log("Filtered appointments for this doctor:", doctorAppointments);
         
         setAppointments(doctorAppointments);
       } catch (err) {
@@ -294,12 +333,35 @@ export default function DoctorMainScreen() {
   };
 
   const today = new Date().toISOString().split("T")[0];
+  
+  // Debug: Log appointments state
+  console.log("Current appointments state:", appointments);
+  console.log("Current doctor state:", doctor);
+  
   const upcomingAppointments = appointments.filter(
-    (appt) => appt.date >= today && appt.patientName && appt.patientName.trim() !== ""
+    (appt) => {
+      // For now, let's show all appointments regardless of date to debug
+      const nameMatch = appt.patientName && appt.patientName.trim() !== "";
+      const statusMatch = appt.status.toLowerCase() !== "cancelled";
+      const doctorMatch = String(appt.doctorId) === String(doctor?.id);
+      
+      console.log(`Appointment ${appt.id}: date=${appt.date}, nameMatch=${nameMatch}, statusMatch=${statusMatch}, doctorMatch=${doctorMatch}`);
+      
+      return nameMatch && statusMatch && doctorMatch;
+    }
   );
   const uniquePatients = Array.from(
-    new Set(appointments.map((appt) => appt.patientName).filter(name => name && name.trim() !== ""))
+    new Set(
+      appointments
+        .filter(appt => String(appt.doctorId) === String(doctor?.id))
+        .map((appt) => appt.patientName)
+        .filter(name => name && name.trim() !== "")
+    )
   );
+  
+  // Debug: Log unique patients
+  console.log("Unique patients for doctor:", uniquePatients);
+  console.log("Upcoming appointments count:", upcomingAppointments.length);
 
   const handleProfileSave = async (data: Doctor) => {
     if (!doctor) return;
@@ -371,58 +433,112 @@ export default function DoctorMainScreen() {
       <div className="px-4 py-6">
         {activeTab === "dashboard" && (
           <>
-            <h2 className="text-xl font-semibold mb-4">
+            <h2 className="text-xl font-semibold mb-6 text-gray-800">
               Upcoming Appointments
             </h2>
             {upcomingAppointments.length === 0 ? (
-              <div className="text-center py-12">
-                <CalendarCheck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">No upcoming appointments</p>
-                <p className="text-gray-400 text-sm mt-2">Appointments will appear here once patients book them.</p>
+              <div className="text-center py-16 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border border-blue-100">
+                <CalendarCheck className="w-20 h-20 text-blue-300 mx-auto mb-6" />
+                <p className="text-gray-700 text-xl font-medium mb-2">No upcoming appointments</p>
+                <p className="text-gray-500 text-base">Appointments will appear here once patients book them.</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {upcomingAppointments.map((appt) => (
                   <div
                     key={appt.id}
-                    className="border rounded-xl p-4 shadow-sm bg-white"
+                    className="bg-gradient-to-r from-white to-blue-50 border border-blue-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300"
                   >
-                    <div className="flex justify-between items-start mb-3">
+                    {/* Header with patient info and status */}
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 bg-gradient-to-br from-[#46C2DE] to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                          {appt.patientName.charAt(0).toUpperCase()}
+                        </div>
                     <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{appt.patientName}</h3>
-                        <p className="text-sm text-gray-600">Token: <span className="font-bold text-[#46C2DE]">{appt.token || "N/A"}</span></p>
+                          <h3 className="text-xl font-bold text-gray-800 mb-1">{appt.patientName}</h3>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm text-gray-600">Token: <span className="font-bold text-[#46C2DE] text-lg">{appt.token || "N/A"}</span></span>
+                            <span className="text-sm text-gray-500">•</span>
+                            <span className="text-sm text-gray-600">{appt.date} at {appt.time}</span>
+                          </div>
+                        </div>
                     </div>
                     <span
-                      className={`text-sm px-3 py-1 rounded-full font-medium ${
+                        className={`px-4 py-2 rounded-full font-semibold text-sm shadow-sm ${
                         appt.status === "Confirmed"
-                          ? "bg-green-100 text-green-600"
+                            ? "bg-green-100 text-green-700 border border-green-200"
                           : appt.status === "Cancelled"
-                            ? "bg-red-100 text-red-600"
-                            : "bg-yellow-100 text-yellow-600"
+                              ? "bg-red-100 text-red-700 border border-red-200"
+                              : "bg-yellow-100 text-yellow-700 border border-yellow-200"
                       }`}
                     >
                       {appt.status}
                     </span>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    {/* Contact Information */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 font-medium">Phone</p>
+                            <p className="text-sm font-semibold text-gray-800">{appt.patientPhone}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                            </svg>
+                          </div>
                       <div>
-                        <p className="text-gray-600"><span className="font-medium">Date:</span> {appt.date}</p>
-                        <p className="text-gray-600"><span className="font-medium">Time:</span> {appt.time}</p>
-                        <p className="text-gray-600"><span className="font-medium">Phone:</span> {appt.patientPhone}</p>
+                            <p className="text-xs text-gray-500 font-medium">Email</p>
+                            <p className="text-sm font-semibold text-gray-800">{appt.patientEmail || "Not provided"}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                            <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 font-medium">Age & Gender</p>
+                            <p className="text-sm font-semibold text-gray-800">{appt.patientAge || "N/A"} • {appt.patientGender || "N/A"}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                            <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
                       </div>
                       <div>
-                        <p className="text-gray-600"><span className="font-medium">Email:</span> {appt.patientEmail || "Not provided"}</p>
-                        <p className="text-gray-600"><span className="font-medium">Age:</span> {appt.patientAge || "Not specified"}</p>
-                        <p className="text-gray-600"><span className="font-medium">Gender:</span> {appt.patientGender || "Not specified"}</p>
+                            <p className="text-xs text-gray-500 font-medium">Appointment</p>
+                            <p className="text-sm font-semibold text-gray-800">{appt.date} at {appt.time}</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                     
+                    {/* Symptoms/Reason */}
                     {appt.symptoms && (
-                      <div className="mt-3 pt-3 border-t border-gray-100">
-                        <p className="text-sm text-gray-600">
-                          <span className="font-medium">Symptoms/Reason:</span> {appt.symptoms}
-                        </p>
+                      <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                        <div className="flex items-center gap-2 mb-2">
+                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <span className="text-sm font-semibold text-gray-700">Symptoms/Reason</span>
+                        </div>
+                        <p className="text-sm text-gray-700 leading-relaxed">{appt.symptoms}</p>
                       </div>
                     )}
                   </div>
@@ -450,10 +566,10 @@ export default function DoctorMainScreen() {
                   Delete Account
                 </button>
                 <button
-                  onClick={clearAllDoctors}
+                  onClick={clearManuallyCreatedDoctors}
                   className="px-4 py-2 bg-red-700 text-white rounded-lg hover:bg-red-800 transition"
                 >
-                  Clear All Doctors
+                  Clear Manually Created Doctors
                 </button>
               </div>
             </div>
@@ -630,49 +746,56 @@ export default function DoctorMainScreen() {
         {activeTab === "schedule" && (
           <>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">All Appointments</h2>
-              <div className="text-sm text-gray-500">
-                {appointments.length} total appointments
+              <h2 className="text-xl font-semibold text-gray-800">Schedule</h2>
+              <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                {upcomingAppointments.length} appointment{upcomingAppointments.length !== 1 ? 's' : ''}
               </div>
             </div>
-            {appointments.length === 0 ? (
-              <div className="text-center py-12">
+            {upcomingAppointments.length === 0 ? (
+              <div className="text-center py-16 bg-gray-50 rounded-2xl border border-gray-200">
                 <CalendarCheck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">No appointments available.</p>
-                <p className="text-gray-400 text-sm mt-2">Start accepting appointments to see them here.</p>
+                <p className="text-gray-500 text-lg">No appointments scheduled</p>
+                <p className="text-gray-400 text-sm mt-2">Your schedule will appear here</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {appointments.map((appt) => (
-                  <div
-                    key={appt.id}
-                    className="border rounded-xl p-4 shadow-sm flex justify-between items-center"
-                  >
+              <div className="space-y-3">
+                {upcomingAppointments.map((appt) => (
+                  <div key={appt.id} className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-[#46C2DE] rounded-full flex items-center justify-center text-white font-medium">
+                          {appt.patientName.charAt(0).toUpperCase()}
+                        </div>
                     <div>
-                      <p className="text-base font-medium">
-                        {appt.patientName}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {appt.date} at {appt.time}
+                          <h3 className="text-base font-semibold text-gray-800">{appt.patientName}</h3>
+                          <p className="text-sm text-gray-600">
+                            {appt.date} • {appt.time}
                       </p>
                     </div>
-                    <span
-                      className={`text-sm px-3 py-1 rounded-full font-medium ${
+                      </div>
+                      <div className="text-right">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         appt.status === "Confirmed"
                           ? "bg-green-100 text-green-600"
                           : appt.status === "Cancelled"
                             ? "bg-red-100 text-red-600"
                             : "bg-yellow-100 text-yellow-600"
-                      }`}
-                    >
+                        }`}>
                       {appt.status}
                     </span>
+                        {appt.token && (
+                          <p className="text-xs text-gray-500 mt-1">Token: {appt.token}</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
           </>
         )}
+
+
 
         {activeTab === "patients" && (
           <>
@@ -689,51 +812,30 @@ export default function DoctorMainScreen() {
                 <p className="text-gray-400 text-sm mt-2">Patients will appear here once they book appointments.</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {uniquePatients.map((patientName, idx) => {
                   // Get all appointments for this patient
                   const patientAppointments = appointments.filter(appt => appt.patientName === patientName);
                   const latestAppointment = patientAppointments[0]; // Most recent appointment
                   
                   return (
-                    <div key={idx} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                      <div className="flex items-start justify-between mb-3">
+                    <div key={idx} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-[#46C2DE] rounded-full flex items-center justify-center text-white font-medium text-lg">
+                          <div className="w-10 h-10 bg-[#46C2DE] rounded-full flex items-center justify-center text-white font-medium">
                             {patientName.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <h3 className="text-lg font-semibold text-gray-900">{patientName}</h3>
+                            <h3 className="text-base font-semibold text-gray-900">{patientName}</h3>
                             <p className="text-sm text-gray-500">
-                              {patientAppointments.length} appointment{patientAppointments.length !== 1 ? 's' : ''}
+                              {patientAppointments.length} appointment{patientAppointments.length !== 1 ? 's' : ''} • Phone: {latestAppointment?.patientPhone || "N/A"}
                             </p>
                           </div>
                         </div>
                         <span className="text-sm text-gray-500">
-                          Last visit: {latestAppointment?.date || "N/A"}
+                          Last: {latestAppointment?.date || "N/A"}
                         </span>
                       </div>
-                      
-                      {latestAppointment && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p className="text-gray-600"><span className="font-medium">Phone:</span> {latestAppointment.patientPhone}</p>
-                            <p className="text-gray-600"><span className="font-medium">Email:</span> {latestAppointment.patientEmail || "Not provided"}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600"><span className="font-medium">Age:</span> {latestAppointment.patientAge || "Not specified"}</p>
-                            <p className="text-gray-600"><span className="font-medium">Gender:</span> {latestAppointment.patientGender || "Not specified"}</p>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {latestAppointment?.symptoms && (
-                        <div className="mt-3 pt-3 border-t border-gray-100">
-                          <p className="text-sm text-gray-600">
-                            <span className="font-medium">Recent Symptoms:</span> {latestAppointment.symptoms}
-                          </p>
-                        </div>
-                      )}
                     </div>
                   );
                 })}

@@ -73,7 +73,7 @@ function PatientAppContent() {
     case "appointments":
       return <PatientDashboardScreen />; // Show dashboard with appointments tab
     default:
-      return <UserLoginScreen />;
+      return <PatientDashboardScreen />;
   }
 }
 
@@ -82,7 +82,7 @@ export default function Home() {
   const searchParams = useSearchParams();
   const [role, setRole] = useState<"patient" | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialScreen, setInitialScreen] = useState<string>("login");
+  const [initialScreen, setInitialScreen] = useState<string>("doctorList");
 
   useEffect(() => {
     // Only check for patient authentication
@@ -105,6 +105,9 @@ export default function Home() {
           if (returnFromBooking === "true") {
             setInitialScreen("appointments");
             localStorage.removeItem("returnFromBooking"); // Clear the flag
+          } else {
+            // Default to doctor list (dashboard)
+            setInitialScreen("doctorList");
           }
         }
       } else {
@@ -122,11 +125,20 @@ export default function Home() {
   const handleRoleSelect = (selectedRole: "patient" | "doctor") => {
     if (typeof window !== 'undefined') {
       if (selectedRole === "doctor") {
+        // Clear any existing authentication data when switching to doctor
+        localStorage.removeItem("currentUser");
+        localStorage.removeItem("userVerified");
+        localStorage.removeItem("currentDoctor");
+        localStorage.removeItem("doctorVerified");
         localStorage.setItem("userRole", "doctor");
-        router.replace("/doctor/login");
+        router.replace("/doctor");
       } else {
+        // Clear any existing authentication data when switching to patient
+        localStorage.removeItem("currentDoctor");
+        localStorage.removeItem("doctorVerified");
         localStorage.setItem("userRole", "patient");
         setRole("patient");
+        setInitialScreen("login"); // Show login screen for patient
       }
     }
   };

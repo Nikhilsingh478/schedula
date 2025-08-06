@@ -4,6 +4,7 @@ export interface Appointment {
   id: string;
   doctorId: string;
   doctorName: string;
+  doctorImage?: string;
   date: string;
   time: string;
   token: string;

@@ -1,36 +1,17 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-const schema = z.object({
-  mobile: z
-    .string()
-    .min(10, "Phone number must be 10 digits")
-    .max(10, "Phone number must be 10 digits")
-    .regex(/^[6-9]\d{9}$/, "Enter a valid Indian phone number"),
-  password: z.string().min(1, "Password is required"),
-});
-
-type FormData = z.infer<typeof schema>;
+import { storageUtils } from "@/lib/storage";
+import { API_ENDPOINTS } from "@/lib/config";
 
 export default function DoctorLoginScreen() {
   const router = useRouter();
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
-  });
+  const [mobile, setMobile] = useState("");
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
     document.body.classList.add("font-poppins");
@@ -40,41 +21,119 @@ export default function DoctorLoginScreen() {
     const doctorVerified = localStorage.getItem("doctorVerified");
     const userRole = localStorage.getItem("userRole");
 
+    console.log("DoctorLoginScreen useEffect:", { currentDoctor: !!currentDoctor, doctorVerified, userRole });
+
     if (currentDoctor && doctorVerified && userRole === "doctor") {
-      router.replace("/doctor/main");
+      console.log("Doctor already logged in, redirecting to main");
+      router.replace("/doctor");
     }
   }, [router]);
 
-  const onSubmit = (data: FormData) => {
-    // Get doctors from localStorage
-    const doctors = JSON.parse(localStorage.getItem("doctors") || "[]");
+  const handleSimpleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("=== DOCTOR LOGIN ATTEMPT ===");
+    console.log("Form values:", { mobile, password });
     
-    // Find doctor by phone number
-    const doctor = doctors.find((d: any) => d.phone === data.mobile);
-    
-    if (!doctor) {
-      alert("Doctor not found! Please sign up first.");
+    if (!mobile || !password) {
+      alert("Please enter both mobile and password!");
       return;
     }
     
-    // Check password
-    if (doctor.password !== data.password) {
-      alert("Invalid password!");
-      return;
+    try {
+      // Step 1: Get doctors from localStorage first
+      let doctors = JSON.parse(localStorage.getItem("doctors") || "[]");
+      console.log("Step 1 - Doctors in localStorage:", doctors.length);
+      
+      // Step 2: If no doctors in localStorage, fetch from server
+      if (doctors.length === 0) {
+        console.log("Step 2 - No doctors in localStorage, fetching from server...");
+        try {
+          const response = await fetch(API_ENDPOINTS.doctors);
+          console.log("Server response status:", response.status);
+          
+          if (response.ok) {
+            const serverDoctors = await response.json();
+            console.log("Step 2 - Doctors from server:", serverDoctors.length);
+            
+            // Add default passwords to server doctors
+            const doctorsWithPasswords = serverDoctors.map((d: any) => ({
+              ...d,
+              password: "123456"
+            }));
+            
+            // Store in localStorage
+            localStorage.setItem("doctors", JSON.stringify(doctorsWithPasswords));
+            doctors = doctorsWithPasswords;
+            console.log("Step 2 - Doctors stored in localStorage");
+          } else {
+            console.error("Server response not ok:", response.status, response.statusText);
+            alert("Failed to fetch doctors from server. Please try again.");
+            return;
+          }
+        } catch (serverError) {
+          console.error("Step 2 - Server fetch error:", serverError);
+          alert("Network error. Please check your connection and try again.");
+          return;
+        }
+      }
+      
+      // Step 3: Find doctor by phone number
+      console.log("Step 3 - Looking for doctor with phone:", mobile);
+      const doctor = doctors.find((d: any) => d.phone === mobile);
+      console.log("Step 3 - Found doctor:", doctor ? "YES" : "NO");
+      
+      if (!doctor) {
+        const availablePhones = doctors.map((d: any) => d.phone).join(", ");
+        alert(`Doctor not found! Available phone numbers: ${availablePhones}`);
+        return;
+      }
+      
+      // Step 4: Check password
+      console.log("Step 4 - Checking password...");
+      console.log("Expected password:", doctor.password);
+      console.log("Provided password:", password);
+      
+      if (doctor.password !== password) {
+        alert(`Invalid password! Please use: ${doctor.password}`);
+        return;
+      }
+      
+      // Step 5: Store authentication data
+      console.log("Step 5 - Authentication successful, storing data...");
+      
+      try {
+        // Store essential doctor data without clearing everything
+        storageUtils.storeDoctor(doctor);
+        storageUtils.setItem("doctorPhone", mobile);
+        storageUtils.setItem("userRole", "doctor");
+        storageUtils.setItem("doctorVerified", "true");
+        
+        console.log("Step 5 - Data stored successfully");
+        console.log("Step 5 - Navigating to dashboard...");
+        
+        // Navigate to dashboard using window.location for more reliable navigation
+        console.log("Navigating to /doctor using window.location");
+        window.location.href = "/doctor";
+      } catch (storageError) {
+        console.error("Step 5 - Storage error:", storageError);
+        alert("Failed to save login data. Please try again.");
+        return;
+      }
+      
+    } catch (error) {
+      console.error("=== LOGIN ERROR ===", error);
+      alert("An unexpected error occurred. Please try again.");
     }
-    
-    // Store logged in doctor info
-    localStorage.setItem("currentDoctor", JSON.stringify(doctor));
-    localStorage.setItem("doctorPhone", data.mobile);
-    localStorage.setItem("userRole", "doctor");
-    
-    // Proceed to OTP verification
-    router.push("/doctor/verify-otp");
   };
 
   const handleSignUp = () => {
-    router.push("/doctor/signup");
+    // Navigate to signup screen
+    window.location.href = "/doctor?screen=signup";
   };
+
+
+
+
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 md:px-8">
@@ -87,10 +146,7 @@ export default function DoctorLoginScreen() {
           Enter your credentials to login
         </p>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="w-full space-y-6"
-        >
+        <form onSubmit={handleSimpleSubmit} className="w-full space-y-6">
           <div>
             <Label
               htmlFor="mobile"
@@ -98,18 +154,14 @@ export default function DoctorLoginScreen() {
             >
               Phone Number
             </Label>
-            <Input
+            <input
               type="tel"
               id="mobile"
+              value={mobile}
+              onChange={(e) => setMobile(e.target.value)}
               placeholder="Enter 10-digit phone number"
-              {...register("mobile")}
-              className={`h-12 rounded-lg ${
-                errors.mobile ? "border-red-500" : "border-gray-300"
-              } focus:border-[#46C2DE] focus:ring-2 focus:ring-[#46C2DE]/20`}
+              className="h-12 rounded-lg w-full px-3 py-2 text-sm border border-gray-300 focus:border-[#46C2DE] focus:ring-2 focus:ring-[#46C2DE]/20 focus:outline-none"
             />
-            {errors.mobile && (
-              <p className="text-red-500 text-sm mt-1">{errors.mobile.message}</p>
-            )}
           </div>
 
           <div>
@@ -119,27 +171,24 @@ export default function DoctorLoginScreen() {
             >
               Password
             </Label>
-            <Input
+            <input
               type="password"
               id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-              {...register("password")}
-              className={`h-12 rounded-lg ${
-                errors.password ? "border-red-500" : "border-gray-300"
-              } focus:border-[#46C2DE] focus:ring-2 focus:ring-[#46C2DE]/20`}
+              className="h-12 rounded-lg w-full px-3 py-2 text-sm border border-gray-300 focus:border-[#46C2DE] focus:ring-2 focus:ring-[#46C2DE]/20 focus:outline-none"
             />
-            {errors.password && (
-              <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
-            )}
           </div>
 
           <Button
             type="submit"
-            disabled={isSubmitting}
-            className="w-full h-12 bg-[#46C2DE] hover:bg-[#3bb0ca] text-white rounded-lg transition-all duration-200 disabled:opacity-50"
+            className="w-full h-12 bg-[#46C2DE] hover:bg-[#3bb0ca] text-white rounded-lg transition-all duration-200"
           >
-            {isSubmitting ? "Logging in..." : "Login"}
+            Login
           </Button>
+
+
         </form>
 
         {/* Footer */}
@@ -168,10 +217,7 @@ export default function DoctorLoginScreen() {
             </p>
           </div>
 
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="w-full space-y-6"
-          >
+          <form onSubmit={handleSimpleSubmit} className="w-full space-y-6">
             <div>
               <Label
                 htmlFor="mobile-desktop"
@@ -179,18 +225,14 @@ export default function DoctorLoginScreen() {
               >
                 Phone Number
               </Label>
-              <Input
+              <input
                 type="tel"
                 id="mobile-desktop"
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value)}
                 placeholder="Enter 10-digit phone number"
-                {...register("mobile")}
-                className={`h-12 rounded-lg ${
-                  errors.mobile ? "border-red-500" : "border-gray-300"
-                } focus:border-[#46C2DE] focus:ring-2 focus:ring-[#46C2DE]/20`}
+                className="h-12 rounded-lg w-full px-3 py-2 text-sm border border-gray-300 focus:border-[#46C2DE] focus:ring-2 focus:ring-[#46C2DE]/20 focus:outline-none"
               />
-              {errors.mobile && (
-                <p className="text-red-500 text-sm mt-1">{errors.mobile.message}</p>
-              )}
             </div>
 
             <div>
@@ -200,27 +242,24 @@ export default function DoctorLoginScreen() {
               >
                 Password
               </Label>
-              <Input
+              <input
                 type="password"
                 id="password-desktop"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                {...register("password")}
-                className={`h-12 rounded-lg ${
-                  errors.password ? "border-red-500" : "border-gray-300"
-                } focus:border-[#46C2DE] focus:ring-2 focus:ring-[#46C2DE]/20`}
+                className="h-12 rounded-lg w-full px-3 py-2 text-sm border border-gray-300 focus:border-[#46C2DE] focus:ring-2 focus:ring-[#46C2DE]/20 focus:outline-none"
               />
-              {errors.password && (
-                <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
-              )}
             </div>
 
             <Button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full h-12 bg-[#46C2DE] hover:bg-[#3bb0ca] text-white rounded-lg transition-all duration-200 disabled:opacity-50"
+              className="w-full h-12 bg-[#46C2DE] hover:bg-[#3bb0ca] text-white rounded-lg transition-all duration-200"
             >
-              {isSubmitting ? "Logging in..." : "Login"}
+              Login
             </Button>
+
+
           </form>
 
           {/* Footer */}
