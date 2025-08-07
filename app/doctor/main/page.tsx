@@ -305,6 +305,10 @@ export default function DoctorMainScreen() {
     localStorage.removeItem("doctorVerified");
     localStorage.removeItem("userRole");
     
+    // Also clear any remembered credentials
+    localStorage.removeItem("rememberedMobile");
+    localStorage.removeItem("rememberedPassword");
+    
     router.replace("/");
   };
 

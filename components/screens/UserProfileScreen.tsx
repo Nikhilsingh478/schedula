@@ -8,6 +8,8 @@ export default function UserProfileScreen() {
   const router = useRouter();
 
   const [user, setUser] = useState({
+    id: "",
+    name: "",
     fullName: "",
     email: "",
     phone: "",
@@ -24,8 +26,21 @@ export default function UserProfileScreen() {
     if (savedUser) {
       try {
         const parsedUser = JSON.parse(savedUser);
-        setUser(parsedUser);
-        setOriginalUser(parsedUser);
+        
+        // Map the data to ensure we have the right field names
+        const mappedUser = {
+          id: parsedUser.id,
+          name: parsedUser.name || parsedUser.fullName || "", // Use name field for display
+          fullName: parsedUser.fullName || parsedUser.name || "", // Keep fullName for compatibility
+          email: parsedUser.email || "",
+          phone: parsedUser.phone || "",
+          age: parsedUser.age || "",
+          gender: parsedUser.gender || "",
+        };
+        
+        console.log("🔍 Loading user profile:", mappedUser);
+        setUser(mappedUser);
+        setOriginalUser(mappedUser);
       } catch (error) {
         console.error("Error parsing user data:", error);
       }
@@ -39,6 +54,27 @@ export default function UserProfileScreen() {
   const handleSave = () => {
     // Save to localStorage
     localStorage.setItem("currentUser", JSON.stringify(user));
+    
+    // Also update the user in the users array
+    try {
+      const users = JSON.parse(localStorage.getItem("users") || "[]");
+      const userIndex = users.findIndex((u: any) => u.id === user.id);
+      if (userIndex !== -1) {
+        // Update the user data, preserving the original structure
+        users[userIndex] = {
+          ...users[userIndex],
+          fullName: user.name || user.fullName, // Update fullName with the new name
+          email: user.email,
+          age: user.age,
+          gender: user.gender
+        };
+        localStorage.setItem("users", JSON.stringify(users));
+        console.log("✅ User profile updated in users array");
+      }
+    } catch (error) {
+      console.error("Error updating user in users array:", error);
+    }
+    
     setOriginalUser(user);
     setIsEditing(false);
   };
@@ -48,8 +84,18 @@ export default function UserProfileScreen() {
     setIsEditing(false);
   };
 
+  // Debug function to check user data
+  const debugUserData = () => {
+    const currentUser = localStorage.getItem("currentUser");
+    const users = localStorage.getItem("users");
+    console.log("🔍 DEBUG - Current user:", currentUser);
+    console.log("🔍 DEBUG - All users:", users);
+    alert("Check console for user data debug info");
+  };
+
   const getFieldIcon = (field: string) => {
     switch (field) {
+      case "name":
       case "fullName": return <User className="h-4 w-4" />;
       case "email": return <Mail className="h-4 w-4" />;
       case "phone": return <Phone className="h-4 w-4" />;
@@ -91,14 +137,14 @@ export default function UserProfileScreen() {
             <div className="flex items-center gap-4">
                              <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-[#46C2DE] to-[#3BA8C4] rounded-full flex items-center justify-center">
                                    <span className="text-white text-xl md:text-2xl font-bold">
-                    {(user.fullName || "U").charAt(0).toUpperCase()}
+                    {(user.name || user.fullName || "U").charAt(0).toUpperCase()}
                   </span>
                </div>
                <div>
                                    <h2 className="text-xl md:text-2xl font-bold text-gray-900">
-                    {user.fullName || "User"}
+                    {user.name || user.fullName || "User"}
                   </h2>
-                <p className="text-gray-600 text-sm md:text-base">Patient</p>
+                <p className="text-gray-600 text-sm md:text-base">User</p>
               </div>
             </div>
             {!isEditing && (
@@ -142,11 +188,11 @@ export default function UserProfileScreen() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
-            {["fullName", "email", "phone", "age", "gender"].map((field) => (
+            {["name", "email", "phone", "age", "gender"].map((field) => (
               <div key={field} className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                   {getFieldIcon(field)}
-                  {field === "fullName" ? "Full Name" : field.charAt(0).toUpperCase() + field.slice(1)}
+                  {field === "name" ? "Full Name" : field.charAt(0).toUpperCase() + field.slice(1)}
                 </label>
                 <div className="relative">
                   <input
@@ -160,7 +206,7 @@ export default function UserProfileScreen() {
                         ? "border-[#46C2DE] bg-white focus:border-[#3BA8C4] focus:ring-4 focus:ring-[#46C2DE]/20" 
                         : "border-gray-200 bg-gray-50 text-gray-600"
                     } focus:outline-none`}
-                    placeholder={`Enter your ${field === "fullName" ? "full name" : field}`}
+                    placeholder={`Enter your ${field === "name" ? "full name" : field}`}
                   />
                 </div>
               </div>
@@ -191,6 +237,14 @@ export default function UserProfileScreen() {
             </button>
             <button className="w-full bg-red-50 text-red-600 py-3 rounded-xl font-medium hover:bg-red-100 transition-colors duration-200">
               Delete Account
+            </button>
+            
+            {/* Debug button - remove after testing */}
+            <button 
+              onClick={debugUserData}
+              className="w-full bg-blue-50 text-blue-600 py-3 rounded-xl font-medium hover:bg-blue-100 transition-colors duration-200"
+            >
+              Debug: Check User Data
             </button>
           </div>
         )}

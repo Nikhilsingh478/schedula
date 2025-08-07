@@ -158,4 +158,72 @@ export const userStorage = {
       return false;
     }
   }
+};
+
+// Notification utilities
+export const notificationUtils = {
+  // Add a notification for a patient
+  addNotification: (patientName: string, notification: any): boolean => {
+    try {
+      const existingNotifications = JSON.parse(localStorage.getItem(`notifications_${patientName}`) || "[]");
+      const updatedNotifications = [...existingNotifications, {
+        ...notification,
+        id: `notif_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        read: false
+      }];
+      storageUtils.setItem(`notifications_${patientName}`, JSON.stringify(updatedNotifications));
+      return true;
+    } catch (error) {
+      console.error("Failed to add notification:", error);
+      return false;
+    }
+  },
+
+  // Get notifications for a patient
+  getNotifications: (patientName: string): any[] => {
+    try {
+      return JSON.parse(localStorage.getItem(`notifications_${patientName}`) || "[]");
+    } catch (error) {
+      console.error("Failed to get notifications:", error);
+      return [];
+    }
+  },
+
+  // Mark notification as read
+  markAsRead: (patientName: string, notificationId: string): boolean => {
+    try {
+      const notifications = notificationUtils.getNotifications(patientName);
+      const updatedNotifications = notifications.map((notif: any) => 
+        notif.id === notificationId ? { ...notif, read: true } : notif
+      );
+      storageUtils.setItem(`notifications_${patientName}`, JSON.stringify(updatedNotifications));
+      return true;
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+      return false;
+    }
+  },
+
+  // Get unread notification count
+  getUnreadCount: (patientName: string): number => {
+    try {
+      const notifications = notificationUtils.getNotifications(patientName);
+      return notifications.filter((notif: any) => !notif.read).length;
+    } catch (error) {
+      console.error("Failed to get unread count:", error);
+      return 0;
+    }
+  },
+
+  // Clear all notifications for a patient
+  clearNotifications: (patientName: string): boolean => {
+    try {
+      localStorage.removeItem(`notifications_${patientName}`);
+      return true;
+    } catch (error) {
+      console.error("Failed to clear notifications:", error);
+      return false;
+    }
+  }
 }; 

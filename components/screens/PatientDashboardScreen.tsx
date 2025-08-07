@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useBooking } from "@/context/BookingContext";
 import { API_ENDPOINTS } from "@/lib/config";
+import { notificationUtils } from "@/lib/storage";
 import { Input } from "@/components/ui/input";
 import {
   Search,
@@ -17,11 +18,13 @@ import {
   MapPin,
   Clock,
   Users,
+  Bell,
 } from "lucide-react";
 import AppointmentsScreen from "@/components/screens/AppointmentsScreen";
 import PatientRecords from "@/components/screens/PatientRecords";
 import UserProfileScreen from "@/components/screens/UserProfileScreen";
 import DoctorProfileView from "@/components/screens/DoctorProfileView";
+import NotificationModal from "@/components/screens/NotificationModal";
 
 // Type Definitions
 type Doctor = {
@@ -53,6 +56,8 @@ export default function PatientDashboardScreen() {
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -138,6 +143,15 @@ export default function PatientDashboardScreen() {
 
     fetchAllDoctors();
   }, [authChecked]);
+
+  // Load notification count
+  useEffect(() => {
+    if (currentUser?.name || currentUser?.fullName) {
+      const patientName = currentUser.name || currentUser.fullName;
+      const count = notificationUtils.getUnreadCount(patientName);
+      setUnreadCount(count);
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     // Check if returning from booking
@@ -262,6 +276,10 @@ export default function PatientDashboardScreen() {
     localStorage.removeItem("userVerified");
     localStorage.removeItem("userRole");
     
+    // Also clear any remembered credentials
+    localStorage.removeItem("rememberedMobile");
+    localStorage.removeItem("rememberedPassword");
+    
     window.location.href = "/";
   };
 
@@ -302,7 +320,7 @@ export default function PatientDashboardScreen() {
 
     switch (activeTab) {
       case "appointments":
-        return <AppointmentsScreen showNotificationIcon={true} />;
+        return <AppointmentsScreen showNotificationIcon={false} />;
       case "records":
         return <PatientRecords />;
       case "profile":
@@ -375,8 +393,19 @@ export default function PatientDashboardScreen() {
       <div className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:bg-white lg:border-r lg:border-gray-200">
         <div className="flex-1 flex flex-col min-h-0">
           {/* Logo/Brand */}
-          <div className="flex items-center h-16 px-6 border-b border-gray-200">
+          <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
             <h1 className="text-xl font-bold text-[#46c2de]">Schedula</h1>
+            <button 
+              onClick={() => setShowNotifications(true)}
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg relative"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </div>
+              )}
+            </button>
           </div>
           
           {/* Navigation */}
@@ -436,9 +465,17 @@ export default function PatientDashboardScreen() {
           <div className="flex items-center justify-between">
             <h1 className="text-lg font-semibold text-gray-900">Schedula</h1>
             <div className="flex items-center space-x-2">
-              {/* <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+              <button 
+                onClick={() => setShowNotifications(true)}
+                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg relative"
+              >
                 <Bell className="w-5 h-5" />
-              </button> */}
+                {unreadCount > 0 && (
+                  <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </div>
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -474,6 +511,15 @@ export default function PatientDashboardScreen() {
           </div>
         </div>
       </div>
+
+      {/* Notification Modal */}
+      {currentUser && (
+        <NotificationModal
+          isOpen={showNotifications}
+          onClose={() => setShowNotifications(false)}
+          patientName={currentUser.name || currentUser.fullName}
+        />
+      )}
     </div>
   );
 }

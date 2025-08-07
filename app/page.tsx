@@ -1,18 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { BookingProvider, useBooking } from "@/context/BookingContext";
-
-import UserLoginScreen from "@/components/screens/UserLoginScreen";
-import UserSignUpScreen from "@/components/screens/UserSignUpScreen";
-import OTPVerificationScreen from "@/components/screens/OTPVerificationScreen";
-import PatientDashboardScreen from "@/components/screens/PatientDashboardScreen";
-import DoctorProfilePublic from "@/components/screens/DoctorProfilePublic";
-import BookingSchedule from "@/components/screens/BookingSchedule";
-import BookingConfirmation from "@/components/screens/BookingConfirmation";
-import PatientDetailsUnfilled from "@/components/screens/PatientDetailsUnfilled";
-import AppointmentsScreen from "@/components/screens/AppointmentsScreen";
+import { useRouter } from "next/navigation";
 import { UserIcon, Stethoscope } from "lucide-react";
 
 function RoleSelectionScreen({
@@ -23,7 +12,7 @@ function RoleSelectionScreen({
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
       <h1 className="text-2xl sm:text-3xl font-semibold text-[#1A1A1A] mb-2">
-        Select Your Role
+        Welcome to Schedula
       </h1>
       <p className="text-sm text-gray-500 mb-8">
         Choose how you want to continue
@@ -50,96 +39,45 @@ function RoleSelectionScreen({
   );
 }
 
-function PatientAppContent() {
-  const { currentScreen } = useBooking();
-
-  switch (currentScreen) {
-    case "login":
-      return <UserLoginScreen />;
-    case "signup":
-      return <UserSignUpScreen />;
-    case "otp":
-      return <OTPVerificationScreen />;
-    case "doctorList":
-      return <PatientDashboardScreen />;
-    case "doctorProfile":
-      return <DoctorProfilePublic />;
-    case "booking":
-      return <BookingSchedule />;
-    case "confirmation":
-      return <BookingConfirmation />;
-    case "patientDetails":
-      return <PatientDetailsUnfilled />;
-    case "appointments":
-      return <PatientDashboardScreen />; // Show dashboard with appointments tab
-    default:
-      return <PatientDashboardScreen />;
-  }
-}
-
 export default function Home() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [role, setRole] = useState<"patient" | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialScreen, setInitialScreen] = useState<string>("doctorList");
+
+  console.log("🏠 Home page component loaded");
 
   useEffect(() => {
-    // Only check for patient authentication
+    // Check if user is already authenticated
     if (typeof window !== 'undefined') {
-      const userRole = localStorage.getItem("userRole");
-      const currentUser = localStorage.getItem("currentUser");
-      const userVerified = localStorage.getItem("userVerified");
-
-      if (userRole === "patient" && currentUser && userVerified) {
-        // Patient is logged in, show patient dashboard
-        setRole("patient");
-        
-        // Check URL parameters for tab navigation
-        const tabParam = searchParams.get('tab');
-        if (tabParam === 'appointments') {
-          setInitialScreen("appointments");
-        } else {
-          // Check if user is returning from booking (show appointments)
-          const returnFromBooking = localStorage.getItem("returnFromBooking");
-          if (returnFromBooking === "true") {
-            setInitialScreen("appointments");
-            localStorage.removeItem("returnFromBooking"); // Clear the flag
-          } else {
-            // Default to doctor list (dashboard)
-            setInitialScreen("doctorList");
-          }
-        }
-      } else {
-        // No valid patient authentication, show role selection
-        setRole(null);
-      }
-    } else {
-      // Server-side rendering, show role selection
-      setRole(null);
+      // Force clear any existing authentication data to start fresh
+      localStorage.removeItem("currentUser");
+      localStorage.removeItem("userVerified");
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("currentDoctor");
+      localStorage.removeItem("doctorVerified");
+      
+      console.log("🧹 Cleared all authentication data");
+      
+      // Show role selection
+      console.log("👤 Showing role selection");
+      setLoading(false);
     }
-    
-    setLoading(false);
-  }, [searchParams]);
+  }, [router]);
 
   const handleRoleSelect = (selectedRole: "patient" | "doctor") => {
-    if (typeof window !== 'undefined') {
-      if (selectedRole === "doctor") {
-        // Clear any existing authentication data when switching to doctor
-        localStorage.removeItem("currentUser");
-        localStorage.removeItem("userVerified");
-        localStorage.removeItem("currentDoctor");
-        localStorage.removeItem("doctorVerified");
-        localStorage.setItem("userRole", "doctor");
-        router.replace("/doctor");
-      } else {
-        // Clear any existing authentication data when switching to patient
-        localStorage.removeItem("currentDoctor");
-        localStorage.removeItem("doctorVerified");
-        localStorage.setItem("userRole", "patient");
-        setRole("patient");
-        setInitialScreen("login"); // Show login screen for patient
-      }
+    if (selectedRole === "doctor") {
+      // Clear any existing authentication data when switching to doctor
+      localStorage.removeItem("currentUser");
+      localStorage.removeItem("userVerified");
+      localStorage.removeItem("userRole");
+      localStorage.setItem("userRole", "doctor");
+      router.replace("/doctor");
+    } else {
+      // Clear any existing authentication data when switching to patient
+      localStorage.removeItem("currentDoctor");
+      localStorage.removeItem("doctorVerified");
+      localStorage.removeItem("userRole");
+      localStorage.setItem("userRole", "patient");
+      router.replace("/patient");
     }
   };
 
@@ -155,13 +93,7 @@ export default function Home() {
     );
   }
 
-  if (!role) {
-    return <RoleSelectionScreen onSelect={handleRoleSelect} />;
-  }
-
-  return (
-    <BookingProvider initialScreen={initialScreen}>
-      <PatientAppContent />
-    </BookingProvider>
-  );
+  // Show role selection screen
+  console.log("🎯 Rendering role selection screen");
+  return <RoleSelectionScreen onSelect={handleRoleSelect} />;
 }

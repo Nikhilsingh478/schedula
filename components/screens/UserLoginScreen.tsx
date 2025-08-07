@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useBooking } from "@/context/BookingContext";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,18 @@ export default function UserLoginScreen() {
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
   const { setCurrentScreen } = useBooking();
+
+  // Auto-fill remembered credentials on component mount
+  useEffect(() => {
+    const rememberedMobile = storageUtils.getItem("rememberedMobile");
+    const rememberedPassword = storageUtils.getItem("rememberedPassword");
+    
+    if (rememberedMobile && rememberedPassword) {
+      setMobile(rememberedMobile);
+      setPassword(rememberedPassword);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,10 +48,11 @@ export default function UserLoginScreen() {
     try {
       // Get users from localStorage
       const users = JSON.parse(localStorage.getItem("users") || "[]");
-      console.log("Users in localStorage:", users.length);
+      console.log("🔍 Login - Users in localStorage:", users.length);
 
       // Find user by mobile number
       const user = users.find((u: any) => u.mobile === mobile);
+      console.log("🔍 Login - Looking for mobile:", mobile, "User found:", user ? "YES" : "NO");
       
       if (!user) {
         alert("User not found! Please sign up first.");
@@ -54,11 +67,27 @@ export default function UserLoginScreen() {
       
       console.log("Login successful, storing user data...");
       
-      // Use storage utility to prevent quota issues
-      storageUtils.clearAll();
+      // Clear only specific items, not all localStorage (to preserve users data)
+      storageUtils.clearKeys([
+        "currentUser", 
+        "userRole", 
+        "userVerified", 
+        "currentDoctor", 
+        "doctorPhone", 
+        "doctorVerified"
+      ]);
+      
       storageUtils.storeUser(user);
       storageUtils.setItem("userRole", "patient");
       storageUtils.setItem("userVerified", "true");
+      
+      // Save login credentials for future logins
+      if (rememberMe) {
+        storageUtils.setItem("rememberedMobile", mobile);
+        storageUtils.setItem("rememberedPassword", password);
+      } else {
+        storageUtils.clearKeys(["rememberedMobile", "rememberedPassword"]);
+      }
       
       console.log("User data stored, proceeding to OTP verification...");
       
@@ -72,6 +101,13 @@ export default function UserLoginScreen() {
 
   const handleSignUp = () => {
     setCurrentScreen("signup");
+  };
+
+  // Debug function to check all users in localStorage
+  const debugUsers = () => {
+    const users = JSON.parse(localStorage.getItem("users") || "[]");
+    console.log("🔍 DEBUG - All users in localStorage:", users);
+    alert(`Found ${users.length} users in localStorage. Check console for details.`);
   };
 
   return (
@@ -162,6 +198,15 @@ export default function UserLoginScreen() {
               className="w-full h-12 bg-[#46C2DE] hover:bg-[#3bb0ca] text-white rounded-lg transition-all duration-200"
             >
               Login
+            </Button>
+
+            {/* Debug button - remove this after testing */}
+            <Button
+              type="button"
+              onClick={debugUsers}
+              className="w-full h-10 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-all duration-200 text-sm"
+            >
+              Debug: Check Users
             </Button>
           </form>
 
@@ -259,13 +304,22 @@ export default function UserLoginScreen() {
               </div>
 
               {/* Login Button */}
-              <Button
-                type="submit"
-                className="w-full h-12 bg-[#46C2DE] hover:bg-[#3bb0ca] text-white rounded-lg transition-all duration-200"
-              >
-                Login
-              </Button>
-            </form>
+                          <Button
+              type="submit"
+              className="w-full h-12 bg-[#46C2DE] hover:bg-[#3bb0ca] text-white rounded-lg transition-all duration-200"
+            >
+              Login
+            </Button>
+
+            {/* Debug button - remove this after testing */}
+            <Button
+              type="button"
+              onClick={debugUsers}
+              className="w-full h-10 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-all duration-200 text-sm"
+            >
+              Debug: Check Users
+            </Button>
+          </form>
 
             {/* Sign Up Link */}
             <div className="text-center">

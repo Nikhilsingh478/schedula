@@ -113,21 +113,57 @@ export default function ScheduleSlot() {
   const [showModal, setShowModal] = useState(false);
   const [token, setToken] = useState("");
 
+  // Load doctor's generated slots
+  const [doctorSlots, setDoctorSlots] = useState<string[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [fullSlotData, setFullSlotData] = useState<any[]>([]);
+
+  // Load doctor's slots when doctor data is available
+  useEffect(() => {
+    if (doctor?.id) {
+      const savedSlots = localStorage.getItem(`doctor_slots_${doctor.id}`);
+      const savedFullSlots = localStorage.getItem(`doctor_full_slots_${doctor.id}`);
+      
+      if (savedSlots && savedFullSlots) {
+        try {
+          const parsedSlots = JSON.parse(savedSlots);
+          const parsedFullSlots = JSON.parse(savedFullSlots);
+          
+          setDoctorSlots(parsedSlots);
+          setFullSlotData(parsedFullSlots);
+          
+          // Filter out full slots
+          const availableSlotTimes = parsedFullSlots
+            .filter((slot: any) => slot.bookedCount < slot.capacity)
+            .map((slot: any) => slot.startTime);
+          
+          setAvailableSlots(availableSlotTimes);
+        } catch (error) {
+          console.error('Error loading doctor slots:', error);
+          // Fallback to default slots
+          setAvailableSlots([...morningSlots, ...eveningSlots]);
+        }
+      } else {
+        // Fallback to default slots if no custom slots are set
+        setAvailableSlots([...morningSlots, ...eveningSlots]);
+      }
+    }
+  }, [doctor?.id]);
+
+  // Default time slots (fallback)
   const morningSlots = [
-    "09:30 AM – 09:45AM",
-    "10:00 AM – 10:15AM",
-    "10:30 AM – 10:45AM",
-    "11:00 AM – 11:15AM",
-    "11:30 AM – 11:45AM",
-    "12:00 PM – 12:15PM",
-    "12:30 PM – 12:45PM",
-    "01:00 PM – 01:15PM",
+    "09:00",
+    "10:00", 
+    "11:00",
+    "12:00",
+    "13:00",
+    "14:00"
   ];
 
   const eveningSlots = [
-    "04:00 PM – 04:15PM",
-    "04:30 PM – 04:45PM",
-    "05:00 PM – 05:15PM",
+    "15:00",
+    "16:00",
+    "17:00"
   ];
 
   const handleBooking = async () => {
@@ -154,8 +190,10 @@ export default function ScheduleSlot() {
       doctorName: doctor?.name || "Doctor",
       doctorImage: doctor?.image || "https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop",
       date: convertDisplayDateToISO(selectedDate), // Convert to ISO format
-      time: selectedSlot,
-              patientName: currentUser.name || currentUser.fullName,
+      time: selectedSlot, // Now in "HH:MM" format
+      startTime: selectedSlot, // Add startTime for calendar compatibility
+      endTime: `${Number.parseInt(selectedSlot.split(":")[0]) + 1}:00`.padStart(5, "0"), // Calculate end time
+      patientName: currentUser.name || currentUser.fullName,
       patientPhone: currentUser.mobile || "+1234567890",
       patientEmail: currentUser.email || "",
       patientAge: currentUser.age || "Not specified",
@@ -167,6 +205,33 @@ export default function ScheduleSlot() {
     };
 
     try {
+      // Update slot booking count
+      if (doctor?.id && fullSlotData.length > 0) {
+        const slotToUpdate = fullSlotData.find((slot: any) => slot.startTime === selectedSlot);
+        if (slotToUpdate) {
+          const updatedFullSlots = fullSlotData.map((slot: any) => {
+            if (slot.slotId === slotToUpdate.slotId) {
+              return {
+                ...slot,
+                bookedCount: slot.bookedCount + 1,
+                patients: [...slot.patients, currentUser.name || currentUser.fullName]
+              };
+            }
+            return slot;
+          });
+          
+          // Save updated slot data
+          localStorage.setItem(`doctor_full_slots_${doctor.id}`, JSON.stringify(updatedFullSlots));
+          setFullSlotData(updatedFullSlots);
+          
+          // Update available slots
+          const newAvailableSlots = updatedFullSlots
+            .filter((slot: any) => slot.bookedCount < slot.capacity)
+            .map((slot: any) => slot.startTime);
+          setAvailableSlots(newAvailableSlots);
+        }
+      }
+
       // Save to JSON server first
       const response = await fetch(API_ENDPOINTS.appointments, {
         method: 'POST',
@@ -267,44 +332,60 @@ export default function ScheduleSlot() {
         </div>
       </div>
 
-      {/* Morning Slots */}
+      {/* Available Time Slots */}
       <div className="mt-6 px-4">
         <h3 className="text-[14px] font-semibold mb-2">Select slot</h3>
-        <div className="grid grid-cols-2 gap-2">
-          {morningSlots.map((slot) => (
-            <button
-              key={slot}
-              onClick={() => setSelectedSlot(slot)}
-              className={`py-2 px-3 text-[13px] rounded-lg border text-center ${
-                selectedSlot === slot
-                  ? "bg-[#46C2DE] text-white border-[#46C2DE]"
-                  : "bg-white border-gray-300 text-gray-700"
-              }`}
-            >
-              {slot}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Evening Slots */}
-      <div className="mt-6 px-4">
-        <h3 className="text-[14px] font-semibold mb-2">Evening Slot</h3>
-        <div className="grid grid-cols-2 gap-2">
-          {eveningSlots.map((slot) => (
-            <button
-              key={slot}
-              onClick={() => setSelectedSlot(slot)}
-              className={`py-2 px-3 text-[13px] rounded-lg border text-center ${
-                selectedSlot === slot
-                  ? "bg-[#46C2DE] text-white border-[#46C2DE]"
-                  : "bg-white border-gray-300 text-gray-700"
-              }`}
-            >
-              {slot}
-            </button>
-          ))}
-        </div>
+        {fullSlotData.length > 0 ? (
+          <div className="grid grid-cols-2 gap-2">
+            {fullSlotData.map((slot: any) => {
+              const isAvailable = slot.bookedCount < slot.capacity;
+              const isSelected = selectedSlot === slot.startTime;
+              
+              return (
+                <button
+                  key={slot.slotId}
+                  onClick={() => isAvailable && setSelectedSlot(slot.startTime)}
+                  disabled={!isAvailable}
+                  className={`py-2 px-3 text-[13px] rounded-lg border text-center transition-all ${
+                    !isAvailable
+                      ? "bg-red-50 border-red-200 text-red-400 cursor-not-allowed opacity-60"
+                      : isSelected
+                        ? "bg-[#46C2DE] text-white border-[#46C2DE]"
+                        : "bg-white border-gray-300 text-gray-700 hover:border-[#46C2DE]"
+                  }`}
+                >
+                  <div className="flex flex-col items-center">
+                    <span>{slot.startTime}</span>
+                    {!isAvailable && (
+                      <span className="text-xs mt-1">Booked</span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : availableSlots.length > 0 ? (
+          <div className="grid grid-cols-2 gap-2">
+            {availableSlots.map((slot) => (
+              <button
+                key={slot}
+                onClick={() => setSelectedSlot(slot)}
+                className={`py-2 px-3 text-[13px] rounded-lg border text-center ${
+                  selectedSlot === slot
+                    ? "bg-[#46C2DE] text-white border-[#46C2DE]"
+                    : "bg-white border-gray-300 text-gray-700"
+                }`}
+              >
+                {slot}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-500 text-sm">No available slots set by doctor</p>
+            <p className="text-gray-400 text-xs mt-1">Please contact the doctor to set their availability</p>
+          </div>
+        )}
       </div>
 
       {/* CTA */}

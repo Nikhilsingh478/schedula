@@ -85,6 +85,8 @@ export default function UserSignUpScreen() {
         alert("Failed to save user data. Please try again.");
         return;
       }
+      
+      console.log("✅ User saved successfully to localStorage");
 
       // Try to save to JSON server as well (optional) - commented out for now
       /*
