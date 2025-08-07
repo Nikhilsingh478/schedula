@@ -18,10 +18,12 @@ import {
   MapPin,
   Edit2,
   Save,
-  X
+  X,
+  Pill
 } from "lucide-react";
 import DoctorCalendar from "@/components/screens/DoctorCalendar";
 import { DoctorSlotEditor } from "@/components/screens/DoctorSlotEditor";
+import { PrescriptionManager } from "@/components/screens/PrescriptionManager";
 
 type Appointment = {
   id: number;
@@ -46,13 +48,30 @@ type Doctor = {
 export default function DoctorMainScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "profile" | "schedule" | "patients" | "calendar"
+    "dashboard" | "profile" | "schedule" | "patients" | "calendar" | "prescriptions"
   >("dashboard");
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editedDoctor, setEditedDoctor] = useState<Doctor | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<{
+    name: string;
+    appointmentId: string;
+    appointmentDate: string;
+  } | null>(null);
+
+  // Get unique patients from appointments
+  const uniquePatients = appointments.reduce((patients, appointment) => {
+    if (!patients.find(p => p.name === appointment.patientName)) {
+      patients.push({
+        name: appointment.patientName,
+        appointmentId: appointment.id.toString(),
+        appointmentDate: appointment.date
+      });
+    }
+    return patients;
+  }, [] as { name: string; appointmentId: string; appointmentDate: string; }[]);
 
   useEffect(() => {
     const phone =
@@ -187,9 +206,6 @@ export default function DoctorMainScreen() {
   const today = new Date().toISOString().split("T")[0];
   const upcomingAppointments = appointments.filter(
     (appt) => appt.date >= today,
-  );
-  const uniquePatients = Array.from(
-    new Set(appointments.map((appt) => appt.patientName)),
   );
 
   // Format date for display
@@ -405,10 +421,9 @@ export default function DoctorMainScreen() {
                         value={editedDoctor?.specialization || ""}
                         onChange={(e) => handleInputChange("specialization", e.target.value)}
                         className="w-full px-3 py-2 text-lg border border-gray-300 rounded-lg focus:border-[#46C2DE] focus:ring-2 focus:ring-[#46C2DE]/20 focus:outline-none"
-                        placeholder="e.g., Cardiologist, Dermatologist"
                       />
                     ) : (
-                      <p className="text-lg text-gray-900 mt-1">{doctor.specialization || "—"}</p>
+                      <p className="text-lg text-gray-900 mt-1">{doctor.specialization || "Not specified"}</p>
                     )}
                   </div>
                 </div>
@@ -421,10 +436,9 @@ export default function DoctorMainScreen() {
                         value={editedDoctor?.experience || ""}
                         onChange={(e) => handleInputChange("experience", e.target.value)}
                         className="w-full px-3 py-2 text-lg border border-gray-300 rounded-lg focus:border-[#46C2DE] focus:ring-2 focus:ring-[#46C2DE]/20 focus:outline-none"
-                        placeholder="e.g., 10 years"
                       />
                     ) : (
-                      <p className="text-lg text-gray-900 mt-1">{doctor.experience || "—"}</p>
+                      <p className="text-lg text-gray-900 mt-1">{doctor.experience || "Not specified"}</p>
                     )}
                   </div>
                   <div>
@@ -433,12 +447,11 @@ export default function DoctorMainScreen() {
                       <textarea
                         value={editedDoctor?.about || ""}
                         onChange={(e) => handleInputChange("about", e.target.value)}
+                        className="w-full px-3 py-2 text-lg border border-gray-300 rounded-lg focus:border-[#46C2DE] focus:ring-2 focus:ring-[#46C2DE]/20 focus:outline-none min-h-[100px] resize-none"
                         rows={4}
-                        className="w-full px-3 py-2 text-lg border border-gray-300 rounded-lg focus:border-[#46C2DE] focus:ring-2 focus:ring-[#46C2DE]/20 focus:outline-none resize-none"
-                        placeholder="Tell patients about your expertise and approach..."
                       />
                     ) : (
-                      <p className="text-lg text-gray-900 mt-1">{doctor.about || "—"}</p>
+                      <p className="text-lg text-gray-900 mt-1">{doctor.about || "No description available"}</p>
                     )}
                   </div>
                 </div>
@@ -450,13 +463,11 @@ export default function DoctorMainScreen() {
       case "schedule":
         return (
           <div className="space-y-6">
-            <DoctorSlotEditor 
-              doctorId={doctor?.id?.toString()} 
-              onSlotsGenerated={(slots) => {
-                console.log('Slots generated for doctor:', doctor?.id, slots);
-                // You can add additional logic here if needed
-              }}
-            />
+            <div>
+              <h2 className="text-xl md:text-2xl font-semibold text-gray-900">Schedule Management</h2>
+              <p className="text-sm text-gray-500 mt-1">Set your availability and session timings</p>
+            </div>
+            <DoctorSlotEditor doctorId={doctor?.id.toString()} />
           </div>
         );
 
@@ -484,13 +495,13 @@ export default function DoctorMainScreen() {
             ) : (
               <div className="bg-white rounded-xl p-6 md:p-8 shadow-sm border border-gray-100">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {uniquePatients.map((pname, idx) => (
+                  {uniquePatients.map((patient, idx) => (
                     <div key={idx} className="flex items-center p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200">
                       <div className="w-10 h-10 bg-gradient-to-br from-[#46C2DE] to-[#3bb0ca] rounded-full flex items-center justify-center text-white font-semibold text-sm mr-3 shadow-sm">
-                        {pname.charAt(0).toUpperCase()}
+                        {patient.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <span className="text-gray-900 font-medium">{pname}</span>
+                        <span className="text-gray-900 font-medium">{patient.name}</span>
                         <p className="text-xs text-gray-500">Patient</p>
                       </div>
                     </div>
@@ -501,12 +512,53 @@ export default function DoctorMainScreen() {
           </div>
         );
 
-              case "calendar":
-          return <DoctorCalendar />;
-        default:
-          return null;
-      }
-    };
+      case "calendar":
+        return <DoctorCalendar />;
+
+      case "prescriptions":
+        return (
+          <div className="space-y-6">
+            {uniquePatients.length > 0 && (
+              <div className="flex items-center justify-end">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-600">Select Patient:</span>
+                  <select
+                    value={selectedPatient ? `${selectedPatient.name}-${selectedPatient.appointmentId}` : ""}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const [name, appointmentId] = e.target.value.split('-');
+                        const patient = uniquePatients.find(p => p.name === name && p.appointmentId === appointmentId);
+                        if (patient) {
+                          setSelectedPatient(patient);
+                        }
+                      } else {
+                        setSelectedPatient(null);
+                      }
+                    }}
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:border-[#46C2DE] focus:ring-2 focus:ring-[#46C2DE]/20 focus:outline-none text-sm"
+                  >
+                    <option value="">Choose a patient...</option>
+                    {uniquePatients.map((patient, idx) => (
+                      <option key={idx} value={`${patient.name}-${patient.appointmentId}`}>
+                        {patient.name} (Appt #{patient.appointmentId})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+            <PrescriptionManager 
+              doctorId={doctor?.id.toString()} 
+              selectedPatient={selectedPatient || undefined}
+              doctorName={doctor?.name}
+            />
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -544,6 +596,7 @@ export default function DoctorMainScreen() {
               { key: "schedule", icon: CalendarCheck, label: "Schedule" },
               { key: "patients", icon: Users, label: "Patients" },
               { key: "calendar", icon: Calendar, label: "Calendar" },
+              { key: "prescriptions", icon: Pill, label: "Prescriptions" },
             ].map(({ key, icon: Icon, label }) => (
               <button
                 key={key}
@@ -603,6 +656,7 @@ export default function DoctorMainScreen() {
             { key: "schedule", icon: CalendarCheck, label: "Schedule" },
             { key: "patients", icon: Users, label: "Patients" },
             { key: "calendar", icon: Calendar, label: "Calendar" },
+            { key: "prescriptions", icon: Pill, label: "Prescriptions" },
           ].map(({ key, icon: Icon, label }) => (
             <button
               key={key}

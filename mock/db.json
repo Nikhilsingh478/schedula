@@ -1202,5 +1202,61 @@
       "name": "Neelam Joshi",
       "phone": "+1234567847"
     }
+  ],
+  "prescriptions": [
+    {
+      "id": "1",
+      "patientName": "John Doe",
+      "appointmentId": "2391",
+      "appointmentDate": "2025-08-04",
+      "medicineName": "Amoxicillin",
+      "dosage": "500mg",
+      "duration": "7 days",
+      "notes": "Take with food. Complete the full course.",
+      "dateCreated": "2025-08-04",
+      "tags": [
+        "Before Food"
+      ]
+    },
+    {
+      "id": "2",
+      "patientName": "John Doe",
+      "appointmentId": "2391",
+      "appointmentDate": "2025-08-04",
+      "medicineName": "Ibuprofen",
+      "dosage": "400mg",
+      "duration": "5 days",
+      "notes": "Take as needed for pain relief.",
+      "dateCreated": "2025-08-04",
+      "tags": [
+        "SOS"
+      ]
+    },
+    {
+      "id": "3",
+      "patientName": "Sarah Johnson",
+      "appointmentId": "2392",
+      "appointmentDate": "2025-08-05",
+      "medicineName": "Metformin",
+      "dosage": "850mg",
+      "duration": "30 days",
+      "notes": "Take twice daily with meals.",
+      "dateCreated": "2025-08-05",
+      "tags": [
+        "Before Food"
+      ]
+    },
+    {
+      "id": "4",
+      "patientName": "Sarah Johnson",
+      "appointmentId": "2392",
+      "appointmentDate": "2025-08-05",
+      "medicineName": "Lisinopril",
+      "dosage": "10mg",
+      "duration": "30 days",
+      "notes": "Take once daily in the morning.",
+      "dateCreated": "2025-08-05",
+      "tags": []
+    }
   ]
 }

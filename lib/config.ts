@@ -7,6 +7,7 @@ export const API_ENDPOINTS = {
   appointments: `${API_BASE_URL}/appointments`,
   slots: `${API_BASE_URL}/slots`,
   patients: `${API_BASE_URL}/patients`,
+  prescriptions: `${API_BASE_URL}/prescriptions`,
 } as const;
 
 // Fallback configuration
